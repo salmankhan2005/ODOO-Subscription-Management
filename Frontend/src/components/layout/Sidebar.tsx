@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import {
   LayoutDashboard,
   Users,
@@ -14,6 +15,7 @@ import {
   Calculator,
   BarChart3,
   UserCheck,
+  UserPlus,
   ChevronLeft,
   ChevronRight,
   LogOut
@@ -43,6 +45,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
   overdueCount = 0
 }) => {
   const { role, user, logout } = useAuth();
+  const { showToast } = useToast();
+  const handleLogout = () => {
+    void logout().catch(() => {
+      showToast('Signed out on this tab', {
+        type: 'warning',
+        message: 'The server could not revoke this session. Its tokens were removed from this tab.',
+      });
+    });
+  };
 
   const adminNav: NavItem[] = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -56,7 +67,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'billing', label: 'AI Billing & Dunning', icon: Zap, highlight: true },
     { id: 'discounts', label: 'Discounts', icon: Percent },
     { id: 'taxes', label: 'Tax Rules', icon: Calculator },
-    { id: 'reports', label: 'Revenue Reports', icon: BarChart3 }
+    { id: 'reports', label: 'Revenue Reports', icon: BarChart3 },
+    { id: 'staff', label: 'Add Staff', icon: UserPlus }
   ];
 
   const staffNav: NavItem[] = [
@@ -160,7 +172,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           )}
           <button
-            onClick={logout}
+            onClick={handleLogout}
             className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition-colors shrink-0"
             title="Log out"
           >
