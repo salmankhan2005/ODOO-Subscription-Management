@@ -67,6 +67,26 @@ export interface SubscriptionPlan {
   subscriptionCount?: number;
 }
 
+export interface PlanRecommendation extends SubscriptionPlan {
+  popularityCount: number;
+  customerCount: number;
+  recommendationScore: number;
+  recommendationReasons: string[];
+}
+
+export interface SubscriptionOptimizationRecommendation {
+  subscriptionId: string;
+  subscriptionNumber: string;
+  currentPlanId: string;
+  currentPlanName: string;
+  alternativePlanId: string;
+  alternativePlanName: string;
+  action: 'upgrade' | 'downgrade' | 'review_unused_subscription';
+  confidence?: number;
+  currentMonthlyCost: number;
+  alternativeMonthlyCost: number;
+}
+
 export interface LineItem {
   id: string;
   productId: string;
@@ -169,7 +189,7 @@ export interface Payment {
   paymentDate: string;
   transactionReference: string;
   notes?: string;
-  status: 'completed' | 'pending' | 'failed';
+  status: 'completed' | 'pending' | 'failed' | 'refunded';
 }
 
 export interface DiscountRule {

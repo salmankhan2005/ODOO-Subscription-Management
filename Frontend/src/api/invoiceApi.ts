@@ -16,6 +16,11 @@ const invoiceNumber = (value: unknown) => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
+const mapInvoiceResponse = <T,>(data: ApiResponse<unknown>, map: (value: unknown) => T) => ({
+  ...data,
+  data: map(data.data),
+});
+
 export const mapInvoice = (value: unknown): Invoice => {
   const record = invoiceRecord(value);
   const customer = invoiceRecord(record.customers);
@@ -70,40 +75,43 @@ export const mapInvoice = (value: unknown): Invoice => {
 
 export const invoiceApi = {
   getAll: async (params?: { status?: string; customer_id?: string; page?: number; per_page?: number }) => {
-    const { data } = await api.get<ApiResponse<Invoice[]>>('/invoices', { params });
-    return data;
+    const { data } = await api.get<ApiResponse<unknown[]>>('/invoices', { params });
+    return {
+      ...data,
+      data: Array.isArray(data.data) ? data.data.map(mapInvoice) : [],
+    };
   },
 
   getById: async (id: string) => {
-    const { data } = await api.get<ApiResponse<Invoice>>(`/invoices/${id}`);
-    return data;
+    const { data } = await api.get<ApiResponse<unknown>>(`/invoices/${id}`);
+    return mapInvoiceResponse(data, mapInvoice);
   },
 
   generate: async (subscriptionId: string) => {
-    const { data } = await api.post<ApiResponse<Invoice>>('/invoices/generate', {
+    const { data } = await api.post<ApiResponse<unknown>>('/invoices/generate', {
       subscription_id: subscriptionId,
     });
-    return data;
+    return mapInvoiceResponse(data, mapInvoice);
   },
 
   confirm: async (id: string) => {
-    const { data } = await api.post<ApiResponse<Invoice>>(`/invoices/${id}/confirm`);
-    return data;
+    const { data } = await api.post<ApiResponse<unknown>>(`/invoices/${id}/confirm`);
+    return mapInvoiceResponse(data, mapInvoice);
   },
 
   send: async (id: string) => {
-    const { data } = await api.post<ApiResponse<Invoice>>(`/invoices/${id}/send`);
-    return data;
+    const { data } = await api.post<ApiResponse<unknown>>(`/invoices/${id}/send`);
+    return mapInvoiceResponse(data, mapInvoice);
   },
 
   cancel: async (id: string) => {
-    const { data } = await api.post<ApiResponse<Invoice>>(`/invoices/${id}/cancel`);
-    return data;
+    const { data } = await api.post<ApiResponse<unknown>>(`/invoices/${id}/cancel`);
+    return mapInvoiceResponse(data, mapInvoice);
   },
 
   update: async (id: string, payload: Partial<Invoice>) => {
-    const { data } = await api.put<ApiResponse<Invoice>>(`/invoices/${id}`, payload);
-    return data;
+    const { data } = await api.put<ApiResponse<unknown>>(`/invoices/${id}`, payload);
+    return mapInvoiceResponse(data, mapInvoice);
   },
 
   downloadPdf: async (id: string) => {
@@ -126,7 +134,10 @@ export const invoiceApi = {
   },
 
   getOverdue: async (params?: { page?: number }) => {
-    const { data } = await api.get<ApiResponse<Invoice[]>>('/invoices/overdue', { params });
-    return data;
+    const { data } = await api.get<ApiResponse<unknown[]>>('/invoices/overdue', { params });
+    return {
+      ...data,
+      data: Array.isArray(data.data) ? data.data.map(mapInvoice) : [],
+    };
   },
 };
