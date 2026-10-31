@@ -19,9 +19,9 @@ def create_app():
     # ── CORS ──────────────────────────────────────────────────────────────────
     CORS(
         app,
-        origins=cfg.CORS_ORIGINS,
+        origins=r'.*' if cfg.FLASK_ENV == 'development' else cfg.CORS_ORIGINS,
         supports_credentials=True,
-        allow_headers=['Content-Type', 'Authorization', 'X-Billing-Secret'],
+        allow_headers='*',
         methods=['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     )
 
