@@ -15,6 +15,7 @@ import { DiscountAndTaxManagement } from '../admin/DiscountAndTaxManagement';
 import { ReportsAnalytics } from '../admin/ReportsAnalytics';
 import { CustomerPortal } from '../customer/CustomerPortal';
 import { StaffManagement } from '../admin/StaffManagement';
+import { ErrorBoundary } from '../common/ErrorBoundary';
 import { invoiceApi } from '../../api/services';
 import axios from 'axios';
 import { useToast } from '../../context/ToastContext';
@@ -26,16 +27,20 @@ export const WorkspaceShell: React.FC = () => {
     role === 'customer' ? 'customer_overview' : 'overview'
   );
   const [collapsed, setCollapsed] = useState<boolean>(false);
-  const [overdueCount, setOverdueCount] = useState<number>(1);
+  const [overdueCount, setOverdueCount] = useState<number>(0);
 
   // Sync default tab when role changes
   useEffect(() => {
     if (role === 'customer') {
-      setActiveTab('customer_overview');
+      if (!activeTab.startsWith('customer_')) {
+        setActiveTab('customer_overview');
+      }
     } else {
-      setActiveTab('overview');
+      if (activeTab.startsWith('customer_')) {
+        setActiveTab('overview');
+      }
     }
-  }, [role]);
+  }, [role, activeTab]);
 
   useEffect(() => {
     if (role === 'customer') {
@@ -43,13 +48,15 @@ export const WorkspaceShell: React.FC = () => {
       return;
     }
 
+    let isMounted = true;
     const checkOverdue = async () => {
       try {
         const res = await invoiceApi.getAll({ status: 'overdue' });
-        if (res.success) {
+        if (isMounted && res.success && Array.isArray(res.data)) {
           setOverdueCount(res.data.length);
         }
       } catch (error) {
+        if (!isMounted) return;
         const responseMessage = axios.isAxiosError(error) &&
           error.response?.data &&
           typeof error.response.data === 'object' &&
@@ -58,12 +65,15 @@ export const WorkspaceShell: React.FC = () => {
           ? error.response.data.message
           : undefined;
         showToast('Could not load overdue invoices', {
-          type: 'error',
+          type: 'warning',
           message: responseMessage || (error instanceof Error ? error.message : 'Please try again.'),
         });
       }
     };
     void checkOverdue();
+    return () => {
+      isMounted = false;
+    };
   }, [role, showToast]);
 
   const viewTitles: Record<string, string> = {
@@ -87,6 +97,42 @@ export const WorkspaceShell: React.FC = () => {
     customer_profile: 'Organization Profile'
   };
 
+  const renderActiveView = () => {
+    if (role === 'customer') {
+      return <CustomerPortal initialTab={activeTab} />;
+    }
+
+    switch (activeTab) {
+      case 'overview':
+        return <OverviewDashboard onNavigate={setActiveTab} />;
+      case 'customers':
+        return <CustomerManagement />;
+      case 'products':
+        return role === 'admin' ? <ProductManagement /> : <OverviewDashboard onNavigate={setActiveTab} />;
+      case 'plans':
+        return <PlanManagement />;
+      case 'quotations':
+        return <QuotationManagement />;
+      case 'subscriptions':
+        return <SubscriptionManagement onNavigate={setActiveTab} />;
+      case 'invoices':
+        return <InvoiceManagement />;
+      case 'payments':
+        return <PaymentManagement />;
+      case 'billing':
+        return role === 'admin' ? <BillingDashboard /> : <OverviewDashboard onNavigate={setActiveTab} />;
+      case 'discounts':
+      case 'taxes':
+        return role === 'admin' ? <DiscountAndTaxManagement /> : <OverviewDashboard onNavigate={setActiveTab} />;
+      case 'reports':
+        return <ReportsAnalytics />;
+      case 'staff':
+        return role === 'admin' ? <StaffManagement /> : <OverviewDashboard onNavigate={setActiveTab} />;
+      default:
+        return <OverviewDashboard onNavigate={setActiveTab} />;
+    }
+  };
+
   return (
     <div className="flex h-screen bg-[#F7FAFA] text-[#252B2E] overflow-hidden">
       {/* Sidebar */}
@@ -104,21 +150,13 @@ export const WorkspaceShell: React.FC = () => {
 
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-[#F7FAFA]">
           <div className="max-w-7xl mx-auto pb-16">
-            {activeTab === 'overview' && role !== 'customer' && <OverviewDashboard onNavigate={setActiveTab} />}
-            {activeTab === 'customers' && role !== 'customer' && <CustomerManagement />}
-            {activeTab === 'products' && role === 'admin' && <ProductManagement />}
-            {activeTab === 'plans' && role !== 'customer' && <PlanManagement />}
-            {activeTab === 'quotations' && role !== 'customer' && <QuotationManagement />}
-            {activeTab === 'subscriptions' && role !== 'customer' && (
-              <SubscriptionManagement onNavigate={setActiveTab} />
-            )}
-            {activeTab === 'invoices' && role !== 'customer' && <InvoiceManagement />}
-            {activeTab === 'payments' && role !== 'customer' && <PaymentManagement />}
-            {activeTab === 'billing' && role === 'admin' && <BillingDashboard />}
-            {(activeTab === 'discounts' || activeTab === 'taxes') && role === 'admin' && <DiscountAndTaxManagement />}
-            {activeTab === 'reports' && role !== 'customer' && <ReportsAnalytics />}
-            {activeTab === 'staff' && role === 'admin' && <StaffManagement />}
-            {activeTab.startsWith('customer_') && role === 'customer' && <CustomerPortal initialTab={activeTab} />}
+            <ErrorBoundary
+              key={`${role}_${activeTab}`}
+              fallbackTitle={`Could not display ${viewTitles[activeTab] || 'view'}`}
+              onReset={() => setActiveTab(role === 'customer' ? 'customer_overview' : 'overview')}
+            >
+              {renderActiveView()}
+            </ErrorBoundary>
           </div>
         </main>
       </div>
