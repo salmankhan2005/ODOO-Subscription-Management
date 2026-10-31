@@ -41,6 +41,16 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({ onNavigate
   const [recentSubscriptions, setRecentSubscriptions] = useState<Subscription[]>([]);
   const [recentInvoices, setRecentInvoices] = useState<Invoice[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [hoveredBarIndex, setHoveredBarIndex] = useState<number | null>(null);
+
+  const monthlyBars = [
+    { month: 'May', val: 74200, pct: 74, growth: '+5.2%' },
+    { month: 'Jun', val: 79800, pct: 80, growth: '+7.5%' },
+    { month: 'Jul', val: 84100, pct: 84, growth: '+5.4%' },
+    { month: 'Aug', val: 88500, pct: 88, growth: '+5.2%' },
+    { month: 'Sep', val: 91400, pct: 92, growth: '+3.3%' },
+    { month: 'Oct (Current)', val: 94820, pct: 100, growth: '+3.7%', active: true },
+  ];
 
   useEffect(() => {
     const loadData = async () => {
@@ -88,10 +98,11 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({ onNavigate
           }));
         }
 
-        const custRes = await customerApi.getAll();
+        const custRes = await customerApi.getAll({ per_page: 100 });
         if (custRes.success) {
           setCustomers(custRes.data);
-          setMetrics((current) => ({ ...current, totalCustomersCount: custRes.data.length }));
+          const totalCount = custRes.pagination?.total || custRes.data.length;
+          setMetrics((current) => ({ ...current, totalCustomersCount: totalCount }));
         }
       } catch (error) {
         const responseMessage = axios.isAxiosError(error) &&
@@ -151,7 +162,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({ onNavigate
             <TrendingUp className="w-4 h-4 text-emerald-400" />
           </div>
           <div className="text-xl sm:text-2xl font-bold font-mono text-white">
-            ${metrics.mrr.toLocaleString()}
+            ${(metrics.mrr ?? 0).toLocaleString()}
           </div>
           <div className="text-[11px] text-emerald-400 flex items-center gap-1 mt-1 font-medium">
             <ArrowUpRight className="w-3 h-3" />
@@ -166,7 +177,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({ onNavigate
             <Repeat className="w-4 h-4 text-indigo-400" />
           </div>
           <div className="text-xl sm:text-2xl font-bold font-mono text-white">
-            ${metrics.arr.toLocaleString()}
+            ${(metrics.arr ?? 0).toLocaleString()}
           </div>
           <div className="text-[11px] text-slate-400 mt-1">Based on active contracts</div>
         </BentoCard>
@@ -190,7 +201,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({ onNavigate
             <Users className="w-4 h-4 text-indigo-400" />
           </div>
           <div className="text-xl sm:text-2xl font-bold font-mono text-white">
-            {customers.length || metrics.totalCustomersCount}
+            {metrics.totalCustomersCount || customers.length}
           </div>
           <div className="text-[11px] text-slate-400 mt-1">Multi-tier enterprises</div>
         </BentoCard>
@@ -202,7 +213,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({ onNavigate
             <CreditCard className="w-4 h-4 text-emerald-400" />
           </div>
           <div className="text-xl sm:text-2xl font-bold font-mono text-white">
-            ${metrics.totalCollected.toLocaleString()}
+            ${(metrics.totalCollected ?? 0).toLocaleString()}
           </div>
           <div className="text-[11px] text-emerald-400 mt-1">Direct card & wire settlement</div>
         </BentoCard>
@@ -214,7 +225,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({ onNavigate
             <Receipt className="w-4 h-4 text-amber-400" />
           </div>
           <div className="text-xl sm:text-2xl font-bold font-mono text-amber-300">
-            ${metrics.totalOutstanding.toLocaleString()}
+            ${(metrics.totalOutstanding ?? 0).toLocaleString()}
           </div>
           <div className="text-[11px] text-slate-400 mt-1">Within standard Net 30 terms</div>
         </BentoCard>
@@ -226,7 +237,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({ onNavigate
             <AlertCircle className="w-4 h-4 text-rose-400" />
           </div>
           <div className="text-xl sm:text-2xl font-bold font-mono text-rose-400">
-            ${metrics.overdueAmount.toLocaleString()}
+            ${(metrics.overdueAmount ?? 0).toLocaleString()}
           </div>
           <div className="text-[11px] text-rose-300/80 mt-1">
             {metrics.overdueCount} account in dunning retry
@@ -253,48 +264,96 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({ onNavigate
           title="Revenue Realization Progression"
           subtitle="Realized recurring collections vs forecasted expansion"
           className="lg:col-span-8"
+          headerAction={
+            hoveredBarIndex !== null ? (
+              <div className="text-xs font-medium text-[#1F3F47] bg-[#DDF3F0] px-3 py-1 rounded-lg border border-[#2E9F92]/40 animate-in fade-in duration-150 flex items-center gap-2">
+                <span className="font-bold">{monthlyBars[hoveredBarIndex].month}:</span>
+                <span className="font-mono font-semibold">${monthlyBars[hoveredBarIndex].val.toLocaleString()}</span>
+                <span className="text-[#2E9F92] font-semibold font-mono text-[11px]">({monthlyBars[hoveredBarIndex].growth} YoY)</span>
+              </div>
+            ) : (
+              <span className="text-[11px] text-slate-500 font-mono">Hover bars for details</span>
+            )
+          }
         >
           <div className="mt-2 space-y-4">
-            <div className="grid grid-cols-6 gap-2 text-center text-xs">
-              {[
-                { month: 'May', val: 74200, pct: 75 },
-                { month: 'Jun', val: 79800, pct: 81 },
-                { month: 'Jul', val: 84100, pct: 85 },
-                { month: 'Aug', val: 88500, pct: 90 },
-                { month: 'Sep', val: 91400, pct: 94 },
-                { month: 'Oct (Current)', val: 94820, pct: 100, active: true }
-              ].map((bar) => (
-                <div key={bar.month} className="flex flex-col items-center">
-                  <div className="text-[11px] font-mono text-slate-400 mb-2">
-                    ${(bar.val / 1000).toFixed(1)}k
-                  </div>
-                  <div className="w-full max-w-[42px] h-32 bg-slate-800/80 rounded-t-lg relative flex items-end overflow-hidden">
+            <div className="relative pt-2">
+              {/* Reference Grid lines */}
+              <div className="absolute inset-0 top-6 bottom-7 flex flex-col justify-between pointer-events-none opacity-40">
+                <div className="border-b border-dashed border-slate-300 w-full" />
+                <div className="border-b border-dashed border-slate-300 w-full" />
+                <div className="border-b border-slate-300 w-full" />
+              </div>
+
+              {/* Bar columns */}
+              <div className="relative z-10 grid grid-cols-6 gap-2 sm:gap-3 text-center text-xs">
+                {monthlyBars.map((bar, idx) => {
+                  const isHovered = hoveredBarIndex === idx;
+                  return (
                     <div
-                      style={{ height: `${bar.pct}%` }}
-                      className={`w-full transition-all duration-500 rounded-t-lg ${
-                        bar.active
-                          ? 'bg-gradient-to-t from-indigo-600 to-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.5)]'
-                          : 'bg-slate-700/80 hover:bg-slate-600'
-                      }`}
-                    />
-                  </div>
-                  <div className={`text-[11px] mt-2 font-medium ${bar.active ? 'text-indigo-400 font-bold' : 'text-slate-400'}`}>
-                    {bar.month}
-                  </div>
-                </div>
-              ))}
+                      key={bar.month}
+                      className="group flex flex-col items-center cursor-pointer transition-transform duration-200 hover:-translate-y-1"
+                      onMouseEnter={() => setHoveredBarIndex(idx)}
+                      onMouseLeave={() => setHoveredBarIndex(null)}
+                    >
+                      {/* Metric value above bar */}
+                      <div
+                        className={`text-[11px] font-mono mb-2 transition-colors ${
+                          bar.active || isHovered
+                            ? 'text-[#1F3F47] font-bold scale-105'
+                            : 'text-slate-600 font-medium'
+                        }`}
+                      >
+                        ${(bar.val / 1000).toFixed(1)}k
+                      </div>
+
+                      {/* Visible trough track */}
+                      <div className="w-full max-w-[46px] h-36 bg-[#EDF3F3] border border-[#D5E2E2] rounded-t-xl relative flex items-end overflow-hidden shadow-inner">
+                        <div
+                          style={{ height: `${bar.pct}%` }}
+                          className={`w-full transition-all duration-500 rounded-t-xl ${
+                            bar.active
+                              ? 'bg-gradient-to-t from-[#1F3F47] to-[#2E9F92] shadow-md shadow-[#2E9F92]/30'
+                              : isHovered
+                              ? 'bg-[#2E9F92]'
+                              : 'bg-[#345C64]/75 hover:bg-[#345C64]'
+                          }`}
+                        />
+                      </div>
+
+                      {/* Month label beneath bar */}
+                      <div
+                        className={`text-[11px] mt-2 transition-colors ${
+                          bar.active
+                            ? 'text-[#1F3F47] font-bold'
+                            : isHovered
+                            ? 'text-[#2E9F92] font-semibold'
+                            : 'text-slate-600 font-medium'
+                        }`}
+                      >
+                        {bar.month}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
-            <div className="pt-4 border-t border-slate-800/80 flex flex-wrap items-center justify-between text-xs text-slate-400 gap-2">
+            {/* Legend & Target metrics */}
+            <div className="pt-4 border-t border-slate-200 flex flex-wrap items-center justify-between text-xs text-slate-500 gap-2">
               <div className="flex items-center gap-4">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-indigo-500" /> Active Recognized MRR
+                <span className="flex items-center gap-1.5 font-medium text-slate-700">
+                  <span className="w-3 h-3 rounded-full bg-gradient-to-tr from-[#1F3F47] to-[#2E9F92] shadow-sm" />
+                  Active Recognized MRR
                 </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-slate-700" /> Historical Performance
+                <span className="flex items-center gap-1.5 font-medium text-slate-600">
+                  <span className="w-3 h-3 rounded-full bg-[#345C64]/80" />
+                  Historical Performance
                 </span>
               </div>
-              <span className="font-mono text-emerald-400 font-medium">99.8% Automated Collection Target</span>
+              <span className="font-mono text-[#2E9F92] font-semibold bg-[#EAF7F5] px-2.5 py-1 rounded-md border border-[#DDF3F0]">
+                99.8% Automated Collection Target
+              </span>
             </div>
           </div>
         </BentoCard>
@@ -391,7 +450,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({ onNavigate
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
-                {recentSubscriptions.map((sub) => (
+                {(recentSubscriptions || []).map((sub) => (
                   <tr key={sub.id} className="hover:bg-slate-800/30 transition-colors">
                     <td className="py-2.5">
                       <div className="font-mono text-slate-200 font-medium">{sub.subscriptionNumber}</div>
@@ -402,7 +461,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({ onNavigate
                       <div className="text-[11px] text-slate-400 truncate max-w-[140px]">{sub.customerEmail}</div>
                     </td>
                     <td className="py-2.5 font-mono text-slate-200 font-semibold">
-                      ${sub.totalAmount.toLocaleString()}
+                      ${(sub.totalAmount ?? 0).toLocaleString()}
                       <span className="text-[10px] text-slate-400 block font-normal">/{sub.billingInterval}</span>
                     </td>
                     <td className="py-2.5 text-right">
@@ -440,7 +499,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({ onNavigate
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
-                {recentInvoices.map((inv) => (
+                {(recentInvoices || []).map((inv) => (
                   <tr key={inv.id} className="hover:bg-slate-800/30 transition-colors">
                     <td className="py-2.5">
                       <div className="font-mono text-slate-200 font-medium">{inv.invoiceNumber}</div>
@@ -453,7 +512,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({ onNavigate
                       </div>
                     </td>
                     <td className="py-2.5 font-mono text-slate-200 font-semibold">
-                      ${inv.totalAmount.toLocaleString()}
+                      ${(inv.totalAmount ?? 0).toLocaleString()}
                     </td>
                     <td className="py-2.5 text-right">
                       <StatusBadge status={inv.status} />
