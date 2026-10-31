@@ -28,9 +28,14 @@ class Config:
     # Billing
     BILLING_SECRET: str = os.environ.get('BILLING_SECRET', 'billing-secret-change-me')
 
+    # Stripe Checkout
+    STRIPE_SECRET_KEY: str = os.environ.get('STRIPE_SECRET_KEY', '')
+    STRIPE_WEBHOOK_SECRET: str = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
+    STRIPE_CURRENCY: str = os.environ.get('STRIPE_CURRENCY', 'usd').lower()
+
     # App
     APP_NAME: str = os.environ.get('APP_NAME', 'Brightloop SMS')
-    FRONTEND_URL: str = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
+    FRONTEND_URL: str = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
 
     # Rate limiting
     RATELIMIT_DEFAULT: str = '200 per minute'
