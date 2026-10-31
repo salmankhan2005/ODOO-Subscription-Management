@@ -1,0 +1,124 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --color-primary-teal: #345C64;
+    --color-deep-teal: #1F3F47;
+    --color-pure-white: #FFFFFF;
+    --color-light-mint: #DDF3F0;
+    --color-chart-teal: #2E9F92;
+    --color-coral-orange: #E96F50;
+    --color-light-bg: #F7FAFA;
+    --color-dark-text: #252B2E;
+    --color-muted-text: #56666B;
+    --color-border: #E5ECEC;
+
+    font-family: 'Public Sans', system-ui, -apple-system, sans-serif;
+    color: #252B2E;
+    background-color: #F7FAFA;
+    scroll-behavior: smooth;
+  }
+
+  h1, h2, h3, h4, h5, h6, .font-display {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    letter-spacing: -0.02em;
+  }
+
+  code, kbd, samp, pre, .font-mono, .tabular-nums {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Hero display scale */
+.hero-display-size {
+  font-size: clamp(2.25rem, 3.8vw, 3.5rem);
+}
+
+/* 3D Bento Spatial Utilities */
+.perspective-stage {
+  perspective: 1150px;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.depth-layer-1 {
+  transform: translateZ(16px);
+}
+
+.depth-layer-2 {
+  transform: translateZ(28px);
+}
+
+.depth-layer-3 {
+  transform: translateZ(42px);
+}
+
+/* Grounded dark ambient shadow for floating isometric hero UI */
+.iso-dark-ambient-shadow {
+  filter: drop-shadow(0 28px 26px rgba(9, 23, 28, 0.34)) drop-shadow(0 12px 12px rgba(15, 35, 42, 0.22));
+}
+
+/* Enterprise subtle scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #F7FAFA;
+}
+::-webkit-scrollbar-thumb {
+  background: #C9D8D8;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #345C64;
+}
+
+/* Architectural subtle grid pattern for pipeline canvases */
+.iso-grid-light {
+  background-image:
+    linear-gradient(to right, rgba(52, 92, 100, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(52, 92, 100, 0.06) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.iso-grid-dark {
+  background-image:
+    linear-gradient(to right, rgba(221, 243, 240, 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(221, 243, 240, 0.07) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* Halftone Wave "Bits" Matrix Shimmer Choreography */
+@keyframes bitShimmerPulse {
+  0%, 100% {
+    opacity: 0.28;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+
+.bit-shimmer-a {
+  animation: bitShimmerPulse 2.6s ease-in-out infinite;
+}
+
+.bit-shimmer-b {
+  animation: bitShimmerPulse 3.4s ease-in-out 0.9s infinite;
+}
+
+.bit-shimmer-c {
+  animation: bitShimmerPulse 4.2s ease-in-out 1.7s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
