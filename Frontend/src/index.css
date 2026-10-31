@@ -1,0 +1,123 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    font-family: 'Public Sans', system-ui, -apple-system, sans-serif;
+
+    --color-slate-50: #252B2E;
+    --color-slate-100: #252B2E;
+    --color-slate-200: #30383B;
+    --color-slate-300: #465154;
+    --color-slate-400: #5D696C;
+    --color-slate-500: #718084;
+    --color-slate-600: #5D696C;
+    --color-slate-700: #E5ECEC;
+    --color-slate-800: #E5ECEC;
+    --color-slate-900: #FFFFFF;
+    --color-slate-950: #F7FAFA;
+
+    --color-indigo-50: #EAF7F5;
+    --color-indigo-100: #DDF3F0;
+    --color-indigo-200: #345C64;
+    --color-indigo-300: #1F3F47;
+    --color-indigo-400: #2E9F92;
+    --color-indigo-500: #2E9F92;
+    --color-indigo-600: #1F3F47;
+    --color-indigo-700: #1F3F47;
+    --color-indigo-800: #345C64;
+    --color-indigo-900: #EAF7F5;
+    --color-indigo-950: #DDF3F0;
+
+    --color-emerald-300: #2E9F92;
+    --color-emerald-400: #2E9F92;
+    --color-emerald-500: #2E9F92;
+    --color-emerald-600: #1F3F47;
+    --color-emerald-950: #EAF7F5;
+
+    --color-cyan-300: #2E9F92;
+    --color-cyan-400: #2E9F92;
+    --color-cyan-500: #2E9F92;
+
+    --color-amber-300: #E96F50;
+    --color-amber-400: #E96F50;
+    --color-amber-500: #E96F50;
+    --color-amber-950: #FFF1ED;
+
+    --color-rose-300: #E96F50;
+    --color-rose-400: #E96F50;
+    --color-rose-500: #E96F50;
+    --color-rose-950: #FFF1ED;
+  }
+
+  h1, h2, h3, h4, h5, h6, .font-display {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  }
+
+  body {
+    background: #F7FAFA;
+    color: #252B2E;
+  }
+
+  code, kbd, samp, pre, .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.text-white {
+  color: #252B2E;
+}
+
+.text-white:is(button, [role="button"]) {
+  color: #FFFFFF;
+}
+
+.bg-indigo-600.text-white,
+.bg-indigo-500.text-white,
+.bg-indigo-700.text-white,
+.bg-emerald-600.text-white,
+.bg-emerald-500.text-white {
+  color: #FFFFFF;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(52, 92, 100, 0.22);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(52, 92, 100, 0.42);
+}
+
+/* Glassmorphism helpers */
+.glass-card {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid #E5ECEC;
+}
+
+.glass-card-hover {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card-hover:hover {
+  border-color: rgba(46, 159, 146, 0.55);
+  box-shadow: 0 8px 24px -8px rgba(46, 159, 146, 0.2);
+}
+
+.chart-teal {
+  color: #2E9F92;
+}
+
+.chart-coral {
+  color: #E96F50;
+}

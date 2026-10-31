@@ -1,0 +1,1355 @@
+# MASTER FRONTEND DEVELOPMENT PROMPT
+# BRIGHTLOOP SOFTWARE — SUBSCRIPTION MANAGEMENT SYSTEM
+
+Act as a Senior React.js Developer, Enterprise SaaS UI/UX Designer, Frontend Architect and Product Designer.
+
+Your task is to design and develop a complete, modern, highly interactive Subscription Management System for Brightloop Software.
+
+This is a real-world enterprise SaaS application, not a static dashboard template.
+
+Build the complete frontend using React.js with professional UI design, functional navigation, interactive tables, dynamic forms, charts, filters, modals, notifications, role-based dashboards and customer self-service functionality.
+
+The application must look and behave like a professionally developed commercial SaaS product.
+
+IMPORTANT: Focus exclusively on the frontend. Do not generate Flask backend code, database schemas, SQL queries or backend business logic.
+
+The frontend must be structured to integrate with an independently developed Python Flask REST API.
+
+---
+
+# 1. TECHNOLOGY STACK
+
+Use the following technologies:
+
+- React.js
+- JavaScript
+- Vite
+- Tailwind CSS
+- React Router DOM
+- Axios
+- Lucide React icons
+- Recharts for analytics
+- React Hook Form for forms
+- Zod for validation
+- React Hot Toast or Sonner for notifications
+- date-fns for date formatting
+
+Use reusable components and modular architecture.
+
+Do not use TypeScript unless explicitly requested.
+
+Avoid unnecessary libraries.
+
+---
+
+# 2. DESIGN DIRECTION
+
+Create a premium enterprise SaaS interface.
+
+Design inspiration:
+- Stripe Dashboard
+- Linear
+- Vercel Dashboard
+- Modern CRM platforms
+- Professional financial management software
+
+Visual style:
+
+- Clean and minimal.
+- Premium SaaS aesthetic.
+- White and light-gray surfaces.
+- Dark navy or charcoal text.
+- Subtle borders.
+- Soft shadows.
+- Rounded cards.
+- Professional typography.
+- Consistent spacing.
+- Excellent information hierarchy.
+- Smooth transitions.
+- Subtle hover animations.
+
+Suggested color palette:
+
+Primary: #4F46E5
+Secondary: #6366F1
+Background: #F8FAFC
+Surface: #FFFFFF
+Text Primary: #0F172A
+Text Secondary: #64748B
+Success: #16A34A
+Warning: #F59E0B
+Danger: #DC2626
+Border: #E2E8F0
+
+Use colors consistently.
+
+Do not make the UI overly colorful.
+
+Avoid:
+- Excessive gradients.
+- Oversized dashboard cards.
+- Unnecessary animations.
+- Cluttered layouts.
+- Too many colors.
+- Generic template-looking interfaces.
+
+The interface should feel like an actual subscription management product.
+
+---
+
+# 3. APPLICATION LAYOUT
+
+Create three role-specific application experiences:
+
+1. Admin Dashboard
+2. Staff Dashboard
+3. Customer Portal
+
+## Main Admin/Staff Layout
+
+Create:
+
+### Sidebar Navigation
+
+- Brightloop logo.
+- Dashboard.
+- Customers.
+- Products.
+- Plans.
+- Quotations.
+- Subscriptions.
+- Invoices.
+- Payments.
+- Billing.
+- Discounts.
+- Taxes.
+- Reports.
+- Settings.
+
+The sidebar must:
+- Support collapse and expand.
+- Highlight the current active page.
+- Display icons and labels.
+- Support nested navigation where appropriate.
+- Adapt to mobile screens.
+- Show menu items according to the authenticated user's role.
+
+### Top Navigation Bar
+
+Include:
+- Sidebar toggle.
+- Breadcrumb navigation.
+- Global search.
+- Notification icon with unread count.
+- Help icon.
+- User avatar.
+- User name.
+- User role.
+- Profile dropdown.
+- Logout option.
+
+Global search should support searching customers, subscriptions, invoices and products through the appropriate API.
+
+### Main Content
+
+- Responsive page layout.
+- Page title.
+- Breadcrumb.
+- Primary action button.
+- Page-specific filters.
+- Data tables or content sections.
+- Loading states.
+- Empty states.
+- Error states.
+
+---
+
+# 4. AUTHENTICATION SCREENS
+
+Build the following pages:
+
+## Login Page
+
+Fields:
+- Email.
+- Password.
+- Remember me.
+- Forgot password.
+- Sign in.
+
+Include:
+- Password visibility toggle.
+- Input validation.
+- Loading state.
+- Error message.
+- Success notification.
+
+## Registration Page
+
+Fields:
+- Full name.
+- Email.
+- Password.
+- Confirm password.
+
+Validation:
+- Unique email handled by API.
+- Password longer than 8 characters.
+- Uppercase letter.
+- Lowercase letter.
+- Special character.
+- Password confirmation must match.
+
+## Forgot Password
+
+- Email field.
+- Send reset link.
+- Success confirmation.
+- Back to login.
+
+## Reset Password
+
+- New password.
+- Confirm password.
+- Submit button.
+
+Make all authentication screens visually polished.
+
+---
+
+# 5. ADMIN DASHBOARD
+
+Build a comprehensive business overview.
+
+## Header
+
+Title: Overview
+
+Subtitle: Monitor your subscription business and financial performance.
+
+Include:
+- Date range selector.
+- Refresh button.
+- Export report button.
+
+## KPI Cards
+
+Display:
+
+1. Total Revenue.
+2. Monthly Recurring Revenue (MRR).
+3. Annual Recurring Revenue (ARR).
+4. Active Subscriptions.
+5. Total Customers.
+6. Outstanding Amount.
+7. Overdue Invoices.
+8. Upcoming Renewals.
+
+Each card should show:
+- Metric value.
+- Percentage change where supplied by the API.
+- Comparison period.
+- Small trend indicator.
+- Relevant icon.
+
+Do not invent real financial figures. Use clearly identified development demo data only when the API is unavailable.
+
+## Revenue Analytics
+
+Create an interactive revenue chart.
+
+Features:
+- Monthly revenue.
+- Quarterly revenue.
+- Yearly revenue.
+- Date range selection.
+- Chart tooltip.
+- Legend.
+- Toggle between revenue series where available.
+
+## Subscription Analytics
+
+Create:
+- Active vs Paused vs Closed subscriptions.
+- Subscription growth chart.
+- Plan distribution.
+- Renewal trends.
+
+## Recent Activity
+
+Show:
+- New customers.
+- New subscriptions.
+- Recent payments.
+- Recent invoices.
+- Recent cancellations.
+
+## Financial Overview
+
+Show:
+- Total collected.
+- Total outstanding.
+- Total overdue.
+- Paid invoice count.
+- Unpaid invoice count.
+
+All dashboard data must come from API integration.
+
+---
+
+# 6. CUSTOMER MANAGEMENT
+
+Create a professional customer management module.
+
+## Customer List
+
+Columns:
+- Customer.
+- Email.
+- Phone.
+- Company.
+- Active subscriptions.
+- Outstanding balance.
+- Status.
+- Created date.
+- Actions.
+
+Features:
+- Search.
+- Pagination.
+- Sorting.
+- Status filters.
+- Date filters.
+- Add customer.
+- Edit customer.
+- View customer.
+- Deactivate customer.
+- Export CSV.
+
+## Add/Edit Customer Modal
+
+Fields:
+- Full name.
+- Email.
+- Phone.
+- Company name.
+- Billing address.
+- Country.
+- Tax identification number.
+- Status.
+
+Validation is required.
+
+## Customer Detail Page
+
+Create tabs:
+
+1. Overview.
+2. Subscriptions.
+3. Invoices.
+4. Payments.
+5. Activity.
+
+Display:
+- Customer profile.
+- Total subscriptions.
+- Total revenue.
+- Outstanding balance.
+- Recent transactions.
+- Subscription history.
+
+Clicking a subscription or invoice should navigate to its detail page.
+
+---
+
+# 7. PRODUCT MANAGEMENT
+
+Create a product catalog.
+
+## Product List
+
+Display:
+- Product name.
+- Product type.
+- Sales price.
+- Cost price.
+- Variants count.
+- Status.
+- Created date.
+- Actions.
+
+Features:
+- Add product.
+- Edit product.
+- View product.
+- Deactivate product.
+- Search.
+- Filter by type.
+- Sort by price.
+- Pagination.
+
+## Product Creation Form
+
+Fields:
+- Product name.
+- Product type.
+- Sales price.
+- Cost price.
+- Description.
+- Notes.
+- Active status.
+
+## Product Variant Management
+
+Allow users to create and manage product variants.
+
+Example:
+
+Business Management Software:
+
+- Standard: Base price.
+- Odoo: Base price + 560.
+- Enterprise: Custom additional price.
+
+Features:
+- Add variant.
+- Edit variant.
+- Remove variant.
+- Set additional price.
+- Preview final product price.
+
+Create a dynamic pricing preview.
+
+When the user selects a variant, update the displayed final price immediately.
+
+---
+
+# 8. SUBSCRIPTION PLAN MANAGEMENT
+
+Create a plan management page.
+
+## Plan List
+
+Columns:
+- Plan name.
+- Associated product.
+- Billing interval.
+- Price.
+- Minimum quantity.
+- Availability.
+- Subscription count.
+- Status.
+- Actions.
+
+## Create Plan Form
+
+Fields:
+- Plan name.
+- Product.
+- Billing interval.
+- Billing interval count.
+- Price.
+- Minimum quantity.
+- Availability start date.
+- Availability end date.
+- Auto-close.
+- Allow early cancellation.
+- Allow pause.
+- Allow renewal.
+- Description.
+
+Billing intervals:
+- Daily.
+- Weekly.
+- Monthly.
+- Yearly.
+
+Create an interactive plan configuration experience.
+
+For example:
+Selecting Monthly should display a billing interval preview.
+
+Include a live plan summary before saving.
+
+---
+
+# 9. QUOTATION MANAGEMENT
+
+Create quotation management screens.
+
+## Quotation List
+
+Columns:
+- Quotation number.
+- Customer.
+- Template.
+- Quotation date.
+- Valid until.
+- Total amount.
+- Status.
+- Actions.
+
+Filters:
+- Draft.
+- Quotation.
+- Confirmed.
+- Expired.
+- Cancelled.
+
+## Create Quotation Wizard
+
+Build a multi-step quotation creation workflow.
+
+Step 1: Select Customer.
+
+Step 2: Select Quotation Template.
+
+Step 3: Add Products and Variants.
+
+Step 4: Configure Quantities, Prices and Taxes.
+
+Step 5: Review Subtotal, Discount and Total.
+
+Step 6: Save or Send Quotation.
+
+Features:
+- Add multiple products.
+- Remove line items.
+- Change quantities.
+- Preview totals.
+- Set quotation validity.
+- Add notes.
+- Save as draft.
+- Generate quotation preview.
+
+## Quotation Detail
+
+Show:
+- Quotation information.
+- Customer details.
+- Product lines.
+- Pricing breakdown.
+- Tax breakdown.
+- Total amount.
+- Status history.
+
+Actions:
+- Edit.
+- Confirm.
+- Convert to Subscription.
+- Cancel.
+- Download PDF.
+
+Add a confirmation dialog before converting a quotation into a subscription.
+
+---
+
+# 10. SUBSCRIPTION MANAGEMENT
+
+This is one of the most important modules.
+
+Create a comprehensive subscription management experience.
+
+## Subscription List
+
+Columns:
+- Subscription number.
+- Customer.
+- Plan.
+- Start date.
+- Next billing date.
+- Expiry date.
+- Amount.
+- Billing interval.
+- Status.
+- Actions.
+
+Filters:
+- Active.
+- Draft.
+- Quotation.
+- Confirmed.
+- Paused.
+- Closed.
+- Cancelled.
+- Expired.
+
+Features:
+- Search.
+- Advanced filtering.
+- Pagination.
+- Sorting.
+- Export.
+- Bulk selection.
+
+## Create Subscription Wizard
+
+Step 1: Select Customer.
+
+Step 2: Select Plan.
+
+Step 3: Select Product and Variant.
+
+Step 4: Set Quantity.
+
+Step 5: Configure Start Date and Expiry Date.
+
+Step 6: Configure Payment Terms.
+
+Step 7: Review Pricing.
+
+Step 8: Create Subscription.
+
+Show a live pricing summary.
+
+## Subscription Detail Page
+
+Create a premium detail page.
+
+Header:
+- Subscription number.
+- Customer name.
+- Status badge.
+- Total amount.
+- Primary actions.
+
+Tabs:
+
+1. Overview.
+2. Subscription Lines.
+3. Invoices.
+4. Payments.
+5. Activity History.
+
+Show:
+- Subscription start date.
+- Expiry date.
+- Next billing date.
+- Billing frequency.
+- Current plan.
+- Product details.
+- Quantity.
+- Unit price.
+- Taxes.
+- Total.
+
+## Subscription Actions
+
+Create interactive action buttons:
+
+- Confirm.
+- Activate.
+- Pause.
+- Resume.
+- Renew.
+- Cancel.
+- Close.
+
+Only show actions permitted by the subscription state and plan configuration.
+
+For important operations, display confirmation dialogs.
+
+After a successful API response:
+- Refresh the subscription details.
+- Update the status.
+- Display a toast notification.
+- Refresh related lists.
+
+---
+
+# 11. INVOICE MANAGEMENT
+
+Create a complete invoice module.
+
+## Invoice List
+
+Columns:
+- Invoice number.
+- Customer.
+- Subscription.
+- Invoice date.
+- Due date.
+- Total amount.
+- Amount paid.
+- Outstanding.
+- Status.
+- Actions.
+
+Filters:
+- Draft.
+- Confirmed.
+- Paid.
+- Partially Paid.
+- Overdue.
+- Cancelled.
+
+Features:
+- Search.
+- Pagination.
+- Date range.
+- Customer filter.
+- Status filter.
+- Export CSV.
+- View invoice.
+- Download PDF.
+- Send invoice.
+
+## Invoice Detail Page
+
+Create a professional invoice layout.
+
+Include:
+- Brightloop company information.
+- Invoice number.
+- Invoice date.
+- Due date.
+- Customer billing information.
+- Subscription reference.
+- Product lines.
+- Quantity.
+- Unit price.
+- Discount.
+- Tax.
+- Subtotal.
+- Total.
+- Amount paid.
+- Outstanding balance.
+- Payment history.
+
+Actions:
+- Confirm invoice.
+- Send invoice.
+- Print invoice.
+- Download PDF.
+- Cancel invoice.
+
+Add a payment history section.
+
+---
+
+# 12. PAYMENT MANAGEMENT
+
+Create a dedicated payment module.
+
+## Payment List
+
+Columns:
+- Payment reference.
+- Customer.
+- Invoice number.
+- Payment method.
+- Amount.
+- Payment date.
+- Transaction reference.
+- Status.
+- Actions.
+
+Payment methods:
+- Cash.
+- Bank Transfer.
+- UPI.
+- Card.
+- Cheque.
+- Other.
+
+## Record Payment Modal
+
+Fields:
+- Invoice selection.
+- Customer.
+- Payment method.
+- Amount.
+- Payment date.
+- Transaction reference.
+- Notes.
+
+Show:
+- Invoice total.
+- Already paid.
+- Outstanding amount.
+- Payment amount.
+- Remaining balance.
+
+Update the payment preview dynamically.
+
+Support partial payments.
+
+Display appropriate warnings for amounts exceeding the outstanding balance.
+
+Do not automatically assume a payment succeeded until the backend confirms it.
+
+---
+
+# 13. DISCOUNT MANAGEMENT
+
+Create a discount management interface.
+
+## Discount List
+
+Columns:
+- Discount name.
+- Discount type.
+- Discount value.
+- Minimum purchase.
+- Applicable products.
+- Start date.
+- End date.
+- Usage count.
+- Maximum usage.
+- Status.
+
+## Create Discount Form
+
+Fields:
+- Discount name.
+- Discount code.
+- Discount type.
+- Discount value.
+- Minimum purchase.
+- Minimum quantity.
+- Applicable products.
+- Applicable subscriptions.
+- Start date.
+- End date.
+- Maximum usage.
+- Active status.
+
+Support:
+- Percentage discount.
+- Fixed amount discount.
+
+Create a live discount calculator preview.
+
+Show how the discount affects the final price.
+
+Only admin users should see discount creation and editing controls.
+
+---
+
+# 14. TAX MANAGEMENT
+
+Create a tax configuration page.
+
+Display:
+- Tax name.
+- Tax percentage.
+- Tax type.
+- Applicable products.
+- Start date.
+- End date.
+- Status.
+
+Actions:
+- Add tax.
+- Edit tax.
+- Deactivate tax.
+- View tax details.
+
+Create a tax calculation preview.
+
+Example:
+Product price: 1,000
+Tax: 18%
+Tax amount: 180
+Final amount: 1,180
+
+Use dynamic input values rather than hardcoded calculations.
+
+---
+
+# 15. BILLING MANAGEMENT
+
+Create a separate billing dashboard.
+
+## Billing Overview
+
+Display:
+- Total subscriptions due.
+- Successfully generated invoices.
+- Failed billing operations.
+- Pending billing operations.
+- Last billing run.
+- Next scheduled billing.
+
+## Billing Controls
+
+Buttons:
+- Preview Due Subscriptions.
+- Run Billing.
+- View Billing History.
+- Retry Failed Operations.
+
+## Billing Run History
+
+Columns:
+- Run ID.
+- Started at.
+- Completed at.
+- Total subscriptions processed.
+- Successful.
+- Failed.
+- Status.
+
+When Run Billing is clicked:
+
+1. Display a confirmation dialog.
+2. Call the billing execution API.
+3. Display a processing state.
+4. Show the response.
+5. Refresh billing history.
+6. Display successful and failed counts.
+
+Never simulate successful billing when the API has not returned success.
+
+---
+
+# 16. REPORTING AND ANALYTICS
+
+Create a reporting center.
+
+Reports:
+
+1. Revenue Report.
+2. Subscription Report.
+3. Payment Report.
+4. Invoice Report.
+5. Overdue Invoice Report.
+6. Customer Report.
+7. Product Performance Report.
+8. Discount Usage Report.
+
+Features:
+- Date range selector.
+- Custom date selection.
+- Filters.
+- Interactive charts.
+- Summary metrics.
+- Data tables.
+- CSV export.
+- Print report.
+
+Create a consistent report layout.
+
+Do not calculate financial analytics using incomplete frontend datasets. Use backend-provided aggregates.
+
+---
+
+# 17. CUSTOMER SELF-SERVICE PORTAL
+
+Create a separate customer experience.
+
+The customer portal should have a cleaner, simpler interface than the admin dashboard.
+
+Sidebar:
+
+- Overview.
+- Available Plans.
+- My Subscriptions.
+- My Invoices.
+- My Payments.
+- Profile.
+
+## Customer Overview
+
+Display:
+- Welcome message.
+- Active subscriptions.
+- Current plan.
+- Next billing date.
+- Outstanding amount.
+- Recent invoices.
+- Recent payments.
+
+## Available Plans
+
+Display plan cards with:
+- Plan name.
+- Product.
+- Price.
+- Billing interval.
+- Features or description.
+- Select Plan button.
+
+## My Subscriptions
+
+Display:
+- Subscription number.
+- Plan.
+- Start date.
+- Next billing date.
+- Expiry date.
+- Status.
+
+Allow permitted actions:
+- View details.
+- Request cancellation.
+- Request pause.
+- Request renewal.
+
+## My Invoices
+
+Display:
+- Invoice number.
+- Invoice date.
+- Due date.
+- Total.
+- Outstanding.
+- Status.
+- Download PDF.
+
+## My Payments
+
+Display payment history and transaction details.
+
+## My Profile
+
+Allow customers to update permitted profile information.
+
+A customer must never see another customer's information.
+
+---
+
+# 18. INTERACTIVE COMPONENT REQUIREMENTS
+
+This is extremely important.
+
+Do not create static screens.
+
+Every visible button, menu, tab, modal, filter and form must have a meaningful interaction.
+
+Implement:
+
+### Navigation
+- Collapsible sidebar.
+- Active menu state.
+- Breadcrumbs.
+- Dropdown menus.
+- Mobile navigation.
+
+### Tables
+- Sorting.
+- Pagination.
+- Search.
+- Filtering.
+- Row selection.
+- Bulk actions where applicable.
+- Loading skeleton.
+- Empty state.
+
+### Forms
+- Required field validation.
+- Inline error messages.
+- Dynamic dropdowns.
+- Conditional fields.
+- Add/remove rows.
+- Live calculations.
+- Submit loading states.
+- Success and failure messages.
+
+### Modals
+- Add.
+- Edit.
+- Delete/deactivate confirmation.
+- Cancel subscription confirmation.
+- Pause subscription confirmation.
+- Renew subscription confirmation.
+- Payment recording.
+- Invoice sending.
+- Billing execution confirmation.
+
+### Notifications
+- Success toast.
+- Error toast.
+- Warning toast.
+- Information toast.
+
+### Dashboard
+- Interactive charts.
+- Date filters.
+- Refresh controls.
+- Tooltips.
+- Responsive data cards.
+
+### Global UX
+- Keyboard accessibility.
+- Clear focus states.
+- Tooltips.
+- Responsive design.
+- Consistent animations.
+- Proper form labels.
+- Accessible dialogs.
+
+No dead buttons or decorative controls that appear functional but do nothing.
+
+---
+
+# 19. API INTEGRATION
+
+The backend is developed separately using Python Flask.
+
+API base URL:
+
+VITE_API_BASE_URL=http://localhost:5000/api/v1
+
+Create a centralized Axios client.
+
+Use the following API modules:
+
+- authApi.js
+- customerApi.js
+- staffApi.js
+- productApi.js
+- planApi.js
+- quotationApi.js
+- subscriptionApi.js
+- taxApi.js
+- discountApi.js
+- invoiceApi.js
+- paymentApi.js
+- billingApi.js
+- dashboardApi.js
+- reportApi.js
+- portalApi.js
+
+All frontend operations must call the corresponding backend endpoint.
+
+Use:
+- Authorization headers.
+- Bearer tokens.
+- Request interceptors.
+- Response interceptors.
+- Consistent error handling.
+- Loading states.
+- Pagination parameters.
+
+Do not connect React directly to Supabase for business operations.
+
+Authentication may use Supabase Auth client-side if coordinated with the backend authentication contract. All protected business operations must go through Flask.
+
+If an API is not yet available, implement a clearly separated development fallback mode with sample data. Never mix sample data with production API results or silently pretend that a request succeeded.
+
+---
+
+# 20. ROLE-BASED UI
+
+Implement separate navigation and permissions.
+
+Admin:
+- Full application navigation.
+- Staff management.
+- Tax management.
+- Discount management.
+- Settings.
+- Billing execution.
+- All financial reports.
+
+Staff:
+- Dashboard.
+- Customers.
+- Quotations.
+- Subscriptions.
+- Invoices.
+- Payments.
+- Operational reports.
+
+Customer:
+- Customer portal only.
+- Own subscriptions.
+- Own invoices.
+- Own payments.
+- Own profile.
+
+Do not rely on frontend role checks alone. The backend remains responsible for enforcing permissions.
+
+---
+
+# 21. FRONTEND PROJECT STRUCTURE
+
+Create this structure:
+
+frontend/
+    public/
+    src/
+        api/
+            axios.js
+            authApi.js
+            customerApi.js
+            staffApi.js
+            productApi.js
+            planApi.js
+            quotationApi.js
+            subscriptionApi.js
+            taxApi.js
+            discountApi.js
+            invoiceApi.js
+            paymentApi.js
+            billingApi.js
+            dashboardApi.js
+            reportApi.js
+            portalApi.js
+
+        assets/
+
+        components/
+            layout/
+            navigation/
+            dashboard/
+            tables/
+            forms/
+            modals/
+            charts/
+            cards/
+            common/
+
+        context/
+            AuthContext.jsx
+
+        hooks/
+
+        pages/
+            auth/
+            admin/
+            staff/
+            customer/
+
+        routes/
+            AppRoutes.jsx
+            ProtectedRoute.jsx
+
+        utils/
+            formatCurrency.js
+            formatDate.js
+            permissions.js
+            validators.js
+
+        App.jsx
+        main.jsx
+
+    package.json
+    .env.example
+
+Maintain clean component separation.
+
+Do not create one enormous App.jsx file.
+
+---
+
+# 22. PERFORMANCE AND RESPONSIVENESS
+
+The application must support thousands of customers, subscriptions and invoices.
+
+Implement:
+- Server-side pagination.
+- Debounced search.
+- Lazy-loaded pages.
+- Efficient rendering.
+- Reusable table components.
+- API request cancellation when appropriate.
+- Avoid unnecessary React re-renders.
+- Responsive charts.
+- Optimized lists.
+
+Responsive support:
+- Desktop.
+- Laptop.
+- Tablet.
+- Mobile.
+
+Desktop should be the primary experience, but mobile must remain usable.
+
+---
+
+# 23. FINAL DEVELOPMENT RULES
+
+1. Generate a complete React.js application.
+2. Do not generate backend code.
+3. Do not generate SQL.
+4. Do not use hardcoded dashboard values in production mode.
+5. Do not create static-only pages.
+6. Every page must have meaningful functionality.
+7. Every action must have an appropriate API integration.
+8. Maintain consistent UI components.
+9. Use reusable forms and tables.
+10. Maintain consistent routing.
+11. Implement authentication-aware navigation.
+12. Implement loading, empty, error and success states.
+13. Keep API integration separate from UI components.
+14. Ensure all forms use proper validation.
+15. Ensure the application can run independently using Vite.
+16. Include a README with installation and execution instructions.
+17. Do not leave incomplete components or placeholder pages.
+18. Use realistic development demo data only when explicitly in development mode.
+
+# 24. IMPLEMENTATION ORDER
+
+Generate the application in this order:
+
+PHASE 1:
+- Project setup.
+- Tailwind configuration.
+- Theme.
+- Global layout.
+- Sidebar.
+- Top navigation.
+- Routing.
+
+PHASE 2:
+- Login.
+- Registration.
+- Forgot password.
+- Authentication context.
+- Protected routes.
+
+PHASE 3:
+- Admin dashboard.
+- Staff dashboard.
+- Customer dashboard.
+
+PHASE 4:
+- Customer management.
+- Product management.
+- Product variants.
+- Plan management.
+
+PHASE 5:
+- Quotations.
+- Quotation templates.
+- Subscriptions.
+
+PHASE 6:
+- Invoices.
+- Payments.
+- Discounts.
+- Taxes.
+
+PHASE 7:
+- Billing dashboard.
+- Reports.
+- Analytics.
+
+PHASE 8:
+- Customer self-service portal.
+
+PHASE 9:
+- API integration.
+- Error handling.
+- Loading states.
+- Responsive refinement.
+- Accessibility.
+- End-to-end UI testing.
+
+At every phase, maintain the same design system, component structure and API contracts.
+
+If the response becomes too long, generate complete files in batches. Maintain a checklist of completed and pending files and continue from the last completed file.
+
+FINAL EXPECTATION:
+
+Deliver a complete, visually impressive, highly interactive, responsive enterprise SaaS frontend for Brightloop Software.
+
+It must feel like a real commercial subscription management platform that an administrator, staff member and customer can use daily.
+
+Prioritize excellent UI/UX, realistic workflows, functional interactions, and seamless integration with the independently developed Flask REST API.
+
+
+
+Provide the exact inspiration website YOU found. Analyze it carefully and suggest a similar website. Also recommend additional features to add to the site.
