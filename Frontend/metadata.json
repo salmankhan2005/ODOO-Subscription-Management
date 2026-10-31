@@ -1,0 +1,6 @@
+{
+  "name": "Brightloop - Enterprise Subscription Management",
+  "description": "Unified recurring billing, subscription lifecycle management, and autonomous AI dunning recovery engine inspired by Recurly.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
