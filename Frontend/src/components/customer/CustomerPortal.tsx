@@ -40,8 +40,6 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ initialTab = 'cu
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [purchaseDetails, setPurchaseDetails] = useState({
     quantity: 1,
-    payment_method: 'Bank Transfer',
-    transaction_reference: '',
     billing_address: '',
     country: '',
     phone: '',
@@ -80,6 +78,35 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ initialTab = 'cu
   }, [customerId]);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get('stripe_session_id');
+    const cancelled = params.get('stripe_cancelled');
+    if (sessionId) {
+      window.history.replaceState({}, '', window.location.pathname);
+      setIsPurchasing(true);
+      portalApi.confirmStripePayment(sessionId)
+        .then(async () => {
+          showToast('Payment successful', {
+            type: 'success',
+            message: 'Your subscription is active and the paid invoice is ready.',
+          });
+          await loadPortalData();
+          setPortalTab('overview');
+        })
+        .catch((error) => {
+          const message = axios.isAxiosError(error) && error.response?.data?.message
+            ? error.response.data.message
+            : 'We could not confirm the payment yet. Refresh the portal or contact support.';
+          showToast('Payment confirmation pending', { type: 'error', message });
+        })
+        .finally(() => setIsPurchasing(false));
+    } else if (cancelled) {
+      window.history.replaceState({}, '', window.location.pathname);
+      showToast('Checkout cancelled', { message: 'No payment was taken.' });
+    }
+  }, [customerId]);
+
+  useEffect(() => {
     if (initialTab === 'customer_plans') setPortalTab('plans');
     else if (initialTab === 'customer_invoices') setPortalTab('invoices');
     else if (initialTab === 'customer_payments') setPortalTab('payments');
@@ -107,8 +134,6 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ initialTab = 'cu
     setSelectedPlan(plan);
     setPurchaseDetails({
       quantity: plan.minimumQuantity || 1,
-      payment_method: 'Bank Transfer',
-      transaction_reference: '',
       billing_address: customer?.billingAddress || '',
       country: customer?.country || '',
       phone: customer?.phone || '',
@@ -121,14 +146,10 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ initialTab = 'cu
     if (!selectedPlan) return;
     setIsPurchasing(true);
     try {
-      const result = await portalApi.purchasePlan(selectedPlan.id, purchaseDetails);
-      showToast(`Plan activated · Invoice ${result.data.invoice_id}`, {
-        type: 'success',
-        message: 'Your manual payment was recorded and the invoice is marked paid.',
-      });
-      setSelectedPlan(null);
-      await loadPortalData();
-      setPortalTab('overview');
+      const checkout = await portalApi.createStripeCheckout(selectedPlan.id, purchaseDetails);
+      const checkoutUrl = checkout.data?.checkout_url;
+      if (!checkoutUrl) throw new Error('Stripe did not return a checkout URL.');
+      window.location.assign(checkoutUrl);
     } catch (error) {
       const message = axios.isAxiosError(error) &&
         error.response?.data &&
@@ -495,7 +516,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ initialTab = 'cu
           if (!isPurchasing) setSelectedPlan(null);
         }}
         title={`Purchase ${selectedPlan?.name || 'Plan'}`}
-        subtitle="Complete your billing and manual payment details. No payment provider is connected."
+        subtitle="Complete your billing details, then pay securely with Stripe."
         maxWidth="xl"
       >
         {selectedPlan && (
@@ -557,40 +578,6 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ initialTab = 'cu
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label className="mb-1 block font-semibold text-slate-700">Manual Payment Method *</label>
-                <select
-                  required
-                  value={purchaseDetails.payment_method}
-                  onChange={(event) => setPurchaseDetails({
-                    ...purchaseDetails,
-                    payment_method: event.target.value,
-                  })}
-                  className="w-full rounded-lg border border-slate-300 bg-white p-2.5 text-slate-800"
-                >
-                  <option>Bank Transfer</option>
-                  <option>Cash</option>
-                  <option>Cheque</option>
-                  <option>Other</option>
-                </select>
-              </div>
-              <div>
-                <label className="mb-1 block font-semibold text-slate-700">Payment Reference</label>
-                <input
-                  type="text"
-                  maxLength={120}
-                  value={purchaseDetails.transaction_reference}
-                  onChange={(event) => setPurchaseDetails({
-                    ...purchaseDetails,
-                    transaction_reference: event.target.value,
-                  })}
-                  placeholder="Optional receipt or transfer reference"
-                  className="w-full rounded-lg border border-slate-300 bg-white p-2.5 text-slate-800"
-                />
-              </div>
-            </div>
-
             <div>
               <label className="mb-1 block font-semibold text-slate-700">Notes</label>
               <textarea
@@ -605,8 +592,8 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ initialTab = 'cu
               />
             </div>
 
-            <p className="rounded-lg bg-amber-50 p-3 text-amber-800">
-              This records a manual payment and marks the invoice paid. It does not process a real transfer or charge a card.
+            <p className="rounded-lg bg-indigo-50 p-3 text-indigo-800">
+              You will be redirected to Stripe to complete payment. Your subscription activates after the payment is confirmed.
             </p>
 
             <div className="flex justify-end gap-2 border-t border-slate-200 pt-4">
@@ -623,7 +610,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ initialTab = 'cu
                 disabled={isPurchasing}
                 className="rounded-lg bg-indigo-600 px-4 py-2 font-semibold text-white disabled:opacity-60"
               >
-                {isPurchasing ? 'Completing Purchase…' : 'Confirm Purchase'}
+                {isPurchasing ? 'Starting checkout…' : 'Continue to Stripe'}
               </button>
             </div>
           </form>

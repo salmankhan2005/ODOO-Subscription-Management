@@ -129,6 +129,26 @@ export const portalApi = {
     return data;
   },
 
+  createStripeCheckout: async (planId: string, payload: {
+    quantity: number;
+    billing_address: string;
+    country: string;
+    phone?: string;
+    notes?: string;
+  }) => {
+    const { data } = await api.post<ApiResponse<{ checkout_url: string }>>(
+      `/portal/plans/${planId}/checkout`, payload
+    );
+    return data;
+  },
+
+  confirmStripePayment: async (sessionId: string) => {
+    const { data } = await api.post<ApiResponse<any>>('/portal/payments/stripe/confirm', {
+      session_id: sessionId,
+    });
+    return data;
+  },
+
   requestCancel: async (subscriptionId: string, reason?: string) => {
     const { data } = await api.post<ApiResponse<null>>(
       `/portal/subscriptions/${subscriptionId}/cancel-request`,

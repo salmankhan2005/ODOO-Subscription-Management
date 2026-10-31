@@ -9,7 +9,11 @@ from datetime import date
 from flask import Blueprint, request, g
 from app.middleware.authentication import require_auth
 from app.middleware.authorization import customer_only
-from app.services.portal_purchase_service import purchase_plan
+from app.services.portal_purchase_service import (
+    complete_stripe_checkout,
+    create_stripe_checkout,
+    purchase_plan,
+)
 from app.utils.response import success_response, error_response
 from app.utils.permissions import customer_can_access
 from app.extensions import supabase_admin
@@ -86,6 +90,54 @@ def purchase_customer_plan(plan_id):
     if err:
         return error_response(err, 422, 'PURCHASE_ERROR')
     return success_response(result, 'Plan purchased and subscription activated', 201)
+
+
+@portal_bp.post('/plans/<plan_id>/checkout')
+@require_auth
+@customer_only
+def create_customer_checkout(plan_id):
+    customer_id = _customer_id()
+    if not customer_id:
+        return error_response('No customer profile linked to this account', 404, 'NOT_FOUND')
+    data = request.get_json(force=True, silent=True) or {}
+    result, err = create_stripe_checkout(customer_id, g.user['id'], plan_id, data)
+    if err:
+        return error_response(err, 422, 'CHECKOUT_ERROR')
+    return success_response(result, 'Stripe checkout session created')
+
+
+@portal_bp.post('/payments/stripe/confirm')
+@require_auth
+@customer_only
+def confirm_customer_stripe_payment():
+    session_id = (request.get_json(force=True, silent=True) or {}).get('session_id')
+    result, err = complete_stripe_checkout(session_id, g.user['id'])
+    if err:
+        return error_response(err, 422, 'PAYMENT_CONFIRMATION_ERROR')
+    return success_response(result, 'Payment confirmed and subscription activated')
+
+
+@portal_bp.post('/payments/stripe/webhook')
+def stripe_webhook():
+    import stripe
+    from flask import current_app
+
+    webhook_secret = current_app.config.get('STRIPE_WEBHOOK_SECRET')
+    if not webhook_secret:
+        return error_response('Stripe webhook is not configured', 503, 'WEBHOOK_NOT_CONFIGURED')
+    signature = request.headers.get('Stripe-Signature', '')
+    try:
+        event = stripe.Webhook.construct_event(request.get_data(), signature, webhook_secret)
+    except (ValueError, stripe.SignatureVerificationError):
+        return error_response('Invalid Stripe webhook signature', 400, 'INVALID_SIGNATURE')
+
+    if event['type'] in ('checkout.session.completed', 'checkout.session.async_payment_succeeded'):
+        session = event['data']['object']
+        if session.get('payment_status') == 'paid':
+            _, err = complete_stripe_checkout(session.get('id'))
+            if err:
+                return error_response(err, 500, 'PAYMENT_PROCESSING_ERROR')
+    return success_response(None, 'Webhook received')
 
 
 @portal_bp.get('/subscriptions')

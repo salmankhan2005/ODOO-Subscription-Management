@@ -42,6 +42,16 @@ Edit `.env` and fill in:
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase Dashboard → Settings → API → service_role secret key |
 | `SECRET_KEY` | Any long random string |
 | `BILLING_SECRET` | Any long random string (shared with your cron scheduler) |
+| `STRIPE_SECRET_KEY` | Stripe Dashboard > Developers > API keys (use a test key while developing) |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook endpoint signing secret |
+| `STRIPE_CURRENCY` | Three-letter Stripe-supported currency, lowercase (default `usd`) |
+| `FRONTEND_URL` | Browser URL for the customer portal checkout return |
+
+For payment reconciliation, register a Stripe webhook at
+`/api/v1/portal/payments/stripe/webhook` for `checkout.session.completed` and
+`checkout.session.async_payment_succeeded`, then set its signing secret as
+`STRIPE_WEBHOOK_SECRET`. The customer return page also confirms the session, so
+the subscription and paid invoice appear immediately after checkout.
 
 > ⚠️ **Never** commit `.env` or expose `SUPABASE_SERVICE_ROLE_KEY` to the frontend.
 
