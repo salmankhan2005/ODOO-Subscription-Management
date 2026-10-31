@@ -10,6 +10,7 @@ Two clients are maintained:
 IMPORTANT: `supabase_admin` must NEVER be exposed to the frontend.  All calls
 through `supabase_admin` must be preceded by Flask-level role & ownership checks.
 """
+from __future__ import annotations
 
 import os
 from supabase import create_client, Client

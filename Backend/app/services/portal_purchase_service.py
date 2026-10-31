@@ -1,4 +1,5 @@
 """Customer plan purchases, including subscription, invoice, and manual payment creation."""
+from __future__ import annotations
 
 import logging
 from datetime import date

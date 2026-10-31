@@ -1,6 +1,7 @@
 """
 app/utils/pagination.py — Pagination helper for list endpoints.
 """
+from __future__ import annotations
 
 from flask import request
 

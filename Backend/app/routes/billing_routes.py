@@ -1,10 +1,11 @@
 """
 app/routes/billing_routes.py
 """
+from __future__ import annotations
 
 from flask import Blueprint, request, g
 from app.middleware.authentication import require_auth
-from app.middleware.authorization import admin_only, require_billing_secret
+from app.middleware.authorization import admin_only, admin_or_staff, require_billing_secret
 from app.services import billing_service
 from app.utils.response import success_response, error_response
 from app.utils.pagination import get_pagination_params
@@ -29,7 +30,7 @@ def run_billing():
 
 @billing_bp.get('/runs')
 @require_auth
-@admin_only
+@admin_or_staff
 def list_runs():
     page, per_page, _ = get_pagination_params()
     data, pagination, err = billing_service.list_billing_runs(page, per_page)
@@ -40,7 +41,7 @@ def list_runs():
 
 @billing_bp.get('/runs/<run_id>')
 @require_auth
-@admin_only
+@admin_or_staff
 def get_run(run_id):
     result, err = billing_service.get_billing_run(run_id)
     if err:
@@ -50,7 +51,7 @@ def get_run(run_id):
 
 @billing_bp.get('/due-subscriptions')
 @require_auth
-@admin_only
+@admin_or_staff
 def due_subscriptions():
     data, err = billing_service.get_due_subscriptions()
     if err:
@@ -60,7 +61,7 @@ def due_subscriptions():
 
 @billing_bp.get('/preview')
 @require_auth
-@admin_only
+@admin_or_staff
 def preview():
     data, err = billing_service.preview_due_subscriptions()
     if err:

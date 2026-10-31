@@ -4,13 +4,13 @@ app/routes/portal_routes.py
 Customer self-service portal API.
 All endpoints enforce that customers can only access their own data (IDOR protection).
 """
+from __future__ import annotations
 
 from datetime import date
 from flask import Blueprint, request, g
 from app.middleware.authentication import require_auth
 from app.middleware.authorization import customer_only
 from app.services.portal_purchase_service import purchase_plan
-from app.services.recommendation_service import get_customer_recommendations
 from app.utils.response import success_response, error_response
 from app.utils.permissions import customer_can_access
 from app.extensions import supabase_admin
@@ -73,19 +73,6 @@ def portal_plans():
         if not plan.get('end_date') or plan['end_date'] >= today
     ]
     return success_response(plans)
-
-
-@portal_bp.get('/recommendations')
-@require_auth
-@customer_only
-def portal_recommendations():
-    customer_id = _customer_id()
-    if not customer_id:
-        return error_response('No customer profile linked to this account', 404, 'NOT_FOUND')
-    recommendations, err = get_customer_recommendations(customer_id)
-    if err:
-        return error_response(err, 503, 'RECOMMENDATIONS_UNAVAILABLE')
-    return success_response(recommendations)
 
 
 @portal_bp.post('/plans/<plan_id>/purchase')

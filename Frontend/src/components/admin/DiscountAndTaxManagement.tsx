@@ -220,13 +220,13 @@ export const DiscountAndTaxManagement: React.FC = () => {
                 </div>
                 <div className="flex justify-between text-slate-400">
                   <span>
-                    Reduction: <strong className="text-white">{d.type === 'percentage' ? `${d.value}% Off` : `$${d.value} Flat`}</strong>
+                    Reduction: <strong className="text-white">{d.type === 'fixed' ? `$${d.value || 0} Flat` : `${d.value || 0}% Off`}</strong>
                   </span>
-                  <span>Min. Purchase: ${d.minimumPurchase}</span>
+                  <span>Min. Purchase: ${d.minimumPurchase || 0}</span>
                 </div>
                 <div className="flex justify-between items-center text-[11px] text-slate-500 pt-1 border-t border-slate-800">
-                  <span>Valid until {d.endDate}</span>
-                  <span className="font-mono">{d.usageCount} / {d.maxUsage} claimed</span>
+                  <span>Valid until {d.endDate || 'Ongoing'}</span>
+                  <span className="font-mono">{d.usageCount || 0} / {d.maxUsage || '∞'} claimed</span>
                 </div>
               </div>
             ))}
@@ -251,11 +251,11 @@ export const DiscountAndTaxManagement: React.FC = () => {
                   </span>
                 </div>
                 <div className="flex justify-between text-slate-400">
-                  <span className="capitalize">Type: {t.type.toUpperCase()}</span>
+                  <span className="capitalize">Type: {(t.type || 'sales').toUpperCase()}</span>
                   <span>Scope: All SaaS Software Lines</span>
                 </div>
                 <div className="text-[11px] text-slate-500 pt-1 border-t border-slate-800">
-                  Effective from {t.startDate} · Auto-calculated on Billing Day
+                  Effective from {t.startDate || 'Immediate'} · Auto-calculated on Billing Day
                 </div>
               </div>
             ))}

@@ -135,16 +135,7 @@ Error:
 | POST | `/billing/run` | Admin / Billing Secret | Run billing cycle |
 | GET | `/invoices/{id}/pdf` | Admin/Staff | Download PDF |
 | GET | `/portal/subscriptions` | Customer | Own subscriptions |
-| GET | `/portal/recommendations` | Customer | Rank available plans by customer adoption and billing preferences; includes model-based alternatives for existing subscribers |
 | GET | `/dashboard/admin` | Admin | Admin dashboard |
-
----
-
-## Plan Recommendations
-
-The customer portal ranks currently available plans using historical subscription selections and the signed-in customer's prior billing cadence where available. Popularity counts use completed subscription lifecycle records and are loaded in pages. New customers receive popularity-based recommendations until they have subscription history.
-
-Existing customers may also receive alternative-plan suggestions from `subscription_optimizer_model.pkl`. The model is loaded lazily from the `Backend` directory and must be a trusted artifact compatible with scikit-learn 1.8.0. It expects the 17 named features encoded in `app/services/recommendation_service.py`; utilization, feature-overlap, capacity, and cancellation-fee data are not stored in the current schema, so those inputs are passed as missing values for the model's trained imputer. Install the pinned runtime with `pip install -r requirements.txt`.
 
 ---
 

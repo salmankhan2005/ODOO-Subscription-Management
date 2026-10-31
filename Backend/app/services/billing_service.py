@@ -8,6 +8,7 @@ Recurring billing engine.
 - Concurrent execution protection: marks run as 'in_progress' before processing.
 - Safe to retry: idempotency in invoice_service prevents duplicates.
 """
+from __future__ import annotations
 
 import logging
 import uuid

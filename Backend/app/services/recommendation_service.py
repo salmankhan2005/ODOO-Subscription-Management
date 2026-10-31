@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Customer plan recommendations and existing-subscription optimization."""
 
 import logging
@@ -53,9 +54,13 @@ def _load_optimizer():
     if not MODEL_PATH.is_file():
         raise FileNotFoundError(f'Subscription optimizer model not found: {MODEL_PATH}')
 
-    import joblib
-
-    model = joblib.load(MODEL_PATH)
+    try:
+        import joblib
+        model = joblib.load(MODEL_PATH)
+    except ImportError:
+        import pickle
+        with open(MODEL_PATH, 'rb') as f:
+            model = pickle.load(f)
     feature_names = getattr(model, 'feature_names_in_', None)
     if feature_names is None and hasattr(model, 'named_steps'):
         feature_names = getattr(model.named_steps.get('imputer'), 'feature_names_in_', None)

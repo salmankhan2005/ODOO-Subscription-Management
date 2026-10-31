@@ -2,19 +2,12 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { portalApi } from '../../api/services';
-import {
-  Customer,
-  Subscription,
-  Invoice,
-  Payment,
-  PlanRecommendation,
-  SubscriptionOptimizationRecommendation,
-  SubscriptionPlan,
-} from '../../types';
+import { Customer, Subscription, Invoice, Payment, SubscriptionPlan } from '../../types';
 import { BentoCard } from '../common/BentoCard';
 import { StatusBadge } from '../common/StatusBadge';
 import { Modal } from '../common/Modal';
 import { useToast } from '../../context/ToastContext';
+import { LiveKitVoiceSupport } from './LiveKitVoiceSupport';
 import {
   Repeat,
   Receipt,
@@ -42,9 +35,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ initialTab = 'cu
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
-  const [availablePlans, setAvailablePlans] = useState<PlanRecommendation[]>([]);
-  const [optimizerRecommendations, setOptimizerRecommendations] =
-    useState<SubscriptionOptimizationRecommendation[]>([]);
+  const [availablePlans, setAvailablePlans] = useState<SubscriptionPlan[]>([]);
   const [loadError, setLoadError] = useState('');
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
   const [isPurchasing, setIsPurchasing] = useState(false);
@@ -73,7 +64,6 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ initialTab = 'cu
         setInvoices(res.data.invoices || []);
         setPayments(res.data.payments || []);
         setAvailablePlans(res.data.availablePlans || []);
-        setOptimizerRecommendations(res.data.optimizerRecommendations || []);
         setLoadError('');
       }
     } catch (error) {
@@ -243,30 +233,6 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ initialTab = 'cu
             </BentoCard>
           </div>
 
-          {availablePlans[0] && (
-            <BentoCard glow className="flex flex-col gap-3 border-emerald-500/30 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <div className="mb-1 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-300">
-                  <Sparkles className="h-3 w-3" />
-                  Recommended plan
-                </div>
-                <h2 className="text-base font-bold text-white">{availablePlans[0].name}</h2>
-                <p className="mt-1 text-xs text-slate-400">
-                  {availablePlans[0].recommendationReasons[0]} · $
-                  {(availablePlans[0].price * availablePlans[0].minimumQuantity).toLocaleString()} /{' '}
-                  {availablePlans[0].billingInterval}
-                </p>
-              </div>
-              <button
-                onClick={() => setPortalTab('plans')}
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-emerald-600"
-              >
-                Explore recommendations
-                <ArrowRight className="h-3.5 w-3.5" />
-              </button>
-            </BentoCard>
-          )}
-
           {/* Subscriptions List */}
           <div className="space-y-3">
             <h2 className="text-base font-bold text-white tracking-tight">Active Agreements</h2>
@@ -332,46 +298,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ initialTab = 'cu
       {/* Tab 2: Available Plans */}
       {portalTab === 'plans' && (
         <div className="space-y-4">
-          <div>
-            <h2 className="text-base font-bold text-white tracking-tight">Plans recommended for you</h2>
-            <p className="mt-1 text-xs text-slate-400">
-              Recommendations reflect plan selections by existing customers and, when available, your billing preferences.
-            </p>
-          </div>
-          {optimizerRecommendations.length > 0 && (
-            <BentoCard
-              title="Subscription optimizer"
-              subtitle="Suggestions from your current subscriptions and the subscription optimizer model"
-              glow
-            >
-              <div className="space-y-2">
-                {optimizerRecommendations.map((recommendation, index) => (
-                  <div
-                    key={`${recommendation.subscriptionId}-${recommendation.alternativePlanId}-${index}`}
-                    className="flex flex-col gap-2 rounded-lg border border-slate-700 bg-slate-900/50 p-3 sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <div>
-                      <p className="text-sm font-semibold text-slate-100">
-                        {recommendation.currentPlanName} → {recommendation.alternativePlanName}
-                      </p>
-                      <p className="mt-1 text-xs text-slate-400">
-                        {recommendation.action === 'review_unused_subscription'
-                          ? 'Review this alternative against your current subscription.'
-                          : `The model suggests a possible ${recommendation.action}.`}
-                        {recommendation.confidence !== undefined
-                          ? ` Model confidence: ${Math.round(recommendation.confidence * 100)}%.`
-                          : ''}
-                      </p>
-                    </div>
-                    <span className="whitespace-nowrap text-xs font-medium text-emerald-300">
-                      ${recommendation.currentMonthlyCost.toLocaleString()} → $
-                      {recommendation.alternativeMonthlyCost.toLocaleString()} / month
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </BentoCard>
-          )}
+          <h2 className="text-base font-bold text-white tracking-tight">Available Enterprise Plans & Upgrades</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {availablePlans.length === 0 && (
               <BentoCard className="md:col-span-3">
@@ -383,12 +310,6 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ initialTab = 'cu
             {availablePlans.map((p) => (
               <BentoCard key={p.id} glow className="flex flex-col justify-between">
                 <div>
-                  {p.recommendationScore > 0 && p.id === availablePlans[0]?.id && (
-                    <span className="mb-2 inline-flex items-center gap-1 rounded-full bg-emerald-950/60 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-300">
-                      <Sparkles className="h-3 w-3" />
-                      Top recommendation
-                    </span>
-                  )}
                   <span className="text-[11px] font-mono uppercase tracking-wider text-indigo-400 font-semibold block mb-2">
                     {p.billingInterval} Cadence
                   </span>
@@ -401,13 +322,6 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ initialTab = 'cu
                     </div>
                   </div>
                   <p className="text-xs text-slate-400 leading-relaxed mb-4">{p.description}</p>
-                  <div className="mb-4 space-y-1">
-                    {p.recommendationReasons.map((reason) => (
-                      <p key={reason} className="text-[11px] text-emerald-300/90">
-                        · {reason}
-                      </p>
-                    ))}
-                  </div>
                 </div>
 
                 <button
@@ -716,6 +630,13 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ initialTab = 'cu
           </form>
         )}
       </Modal>
+
+      {/* Fixed LiveKit Voice Support on Right Side */}
+      <LiveKitVoiceSupport
+        customer={customer}
+        subscriptions={subscriptions}
+        invoices={invoices}
+      />
     </div>
   );
 };

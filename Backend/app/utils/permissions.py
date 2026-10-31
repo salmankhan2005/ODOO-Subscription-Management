@@ -1,6 +1,7 @@
 """
 app/utils/permissions.py — Ownership-check helpers to prevent IDOR.
 """
+from __future__ import annotations
 
 from flask import g
 from app.utils.response import error_response

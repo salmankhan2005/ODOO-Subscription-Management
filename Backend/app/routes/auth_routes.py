@@ -1,6 +1,7 @@
 """
 app/routes/auth_routes.py
 """
+from __future__ import annotations
 
 from flask import Blueprint, request, g, current_app
 from app.middleware.authentication import require_auth

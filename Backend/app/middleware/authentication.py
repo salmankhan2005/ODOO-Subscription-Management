@@ -4,6 +4,7 @@ app/middleware/authentication.py
 Verifies Supabase JWT access tokens sent in the Authorization header.
 Injects `g.user` (dict with id, email, role) for downstream handlers.
 """
+from __future__ import annotations
 
 import functools
 from flask import request, g

@@ -3,6 +3,7 @@ app/utils/date_utils.py — Billing date and interval calculation helpers.
 
 Handles month-end edge cases, leap years, and all billing intervals.
 """
+from __future__ import annotations
 
 from datetime import date, timedelta
 from dateutil.relativedelta import relativedelta

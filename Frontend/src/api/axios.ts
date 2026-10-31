@@ -143,77 +143,13 @@ const api: AxiosInstance = axios.create({
 });
 const refreshPromises = new Map<string, Promise<string>>();
 
-const tokenExpiresSoon = (token: string) => {
-  try {
-    const encodedPayload = token.split('.')[1];
-    if (!encodedPayload) return false;
-    const base64 = encodedPayload.replace(/-/g, '+').replace(/_/g, '/');
-    const payload = JSON.parse(atob(base64.padEnd(Math.ceil(base64.length / 4) * 4, '=')));
-    return typeof payload.exp === 'number' && payload.exp * 1000 <= Date.now() + 60_000;
-  } catch {
-    return false;
-  }
-};
-
-const refreshSession = (refreshToken: string, account?: StoredAuthAccount) => {
-  const refreshKey = account?.id || 'legacy';
-  let refreshPromise = refreshPromises.get(refreshKey);
-  if (!refreshPromise) {
-    refreshPromise = axios
-      .post(`${API_BASE_URL}/auth/refresh`, { refresh_token: refreshToken })
-      .then(({ data }): string => {
-        const nextAccessToken = data?.data?.access_token;
-        const nextRefreshToken = data?.data?.refresh_token;
-        if (typeof nextAccessToken !== 'string' || typeof nextRefreshToken !== 'string') {
-          throw new Error('The server returned an invalid refreshed session');
-        }
-        if (account) {
-          tokenStorage.updateAccountTokens(account.id, nextAccessToken, nextRefreshToken);
-        } else {
-          tokenStorage.setToken(nextAccessToken);
-          tokenStorage.setRefresh(nextRefreshToken);
-        }
-        return nextAccessToken;
-      })
-      .finally(() => {
-        refreshPromises.delete(refreshKey);
-      });
-    refreshPromises.set(refreshKey, refreshPromise);
-  }
-  return refreshPromise;
-};
-
-const clearFailedSession = (account?: StoredAuthAccount) => {
-  if (account) {
-    const failedAccountWasActive = tokenStorage.getActiveAccountId() === account.id;
-    tokenStorage.removeAccount(account.id);
-    if (failedAccountWasActive) window.location.href = '/';
-  } else {
-    tokenStorage.clear();
-    window.location.href = '/';
-  }
-};
-
 // Request interceptor — attach Bearer token
-api.interceptors.request.use(async (config) => {
+api.interceptors.request.use((config) => {
   if (!config.headers.Authorization) {
-    let token = tokenStorage.getToken();
-    const accountId = tokenStorage.getActiveAccountId();
-    const account = accountId
-      ? tokenStorage.getAccounts().find((item) => item.id === accountId)
-      : undefined;
-    const refreshToken = account?.refresh_token || tokenStorage.getRefresh();
-    if (token && refreshToken && tokenExpiresSoon(token)) {
-      try {
-        token = await refreshSession(refreshToken, account);
-      } catch (error) {
-        clearFailedSession(account);
-        throw error;
-      }
-    }
+    const token = tokenStorage.getToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      (config as RetryableRequestConfig)._authAccountId = accountId;
+      (config as RetryableRequestConfig)._authAccountId = tokenStorage.getActiveAccountId();
     }
   }
   return config;
@@ -242,14 +178,49 @@ api.interceptors.response.use(
         (original._authAccountId ? undefined : tokenStorage.getRefresh());
       if (refreshToken) {
         try {
-          const nextAccessToken = await refreshSession(refreshToken, account);
+          const refreshKey = account?.id || 'legacy';
+          let refreshPromise = refreshPromises.get(refreshKey);
+          if (!refreshPromise) {
+            refreshPromise = axios
+              .post(`${API_BASE_URL}/auth/refresh`, { refresh_token: refreshToken })
+              .then(({ data }): string => {
+                const nextAccessToken = data.data.access_token as string;
+                const nextRefreshToken = data.data.refresh_token as string;
+                if (account) {
+                  tokenStorage.updateAccountTokens(account.id, nextAccessToken, nextRefreshToken);
+                } else {
+                  tokenStorage.setToken(nextAccessToken);
+                  tokenStorage.setRefresh(nextRefreshToken);
+                }
+                return nextAccessToken;
+              })
+              .finally(() => {
+                refreshPromises.delete(refreshKey);
+              });
+            refreshPromises.set(refreshKey, refreshPromise);
+          }
+          const nextAccessToken = await refreshPromise;
           original.headers.Authorization = `Bearer ${nextAccessToken}`;
           return api(original);
         } catch {
-          clearFailedSession(account);
+          if (account) {
+            const failedAccountWasActive = tokenStorage.getActiveAccountId() === account.id;
+            tokenStorage.removeAccount(account.id);
+            if (failedAccountWasActive) window.location.href = '/';
+          } else {
+            tokenStorage.clear();
+            window.location.href = '/';
+          }
         }
       } else {
-        clearFailedSession(account);
+        if (account) {
+          const failedAccountWasActive = tokenStorage.getActiveAccountId() === account.id;
+          tokenStorage.removeAccount(account.id);
+          if (failedAccountWasActive) window.location.href = '/';
+        } else {
+          tokenStorage.clear();
+          window.location.href = '/';
+        }
       }
     }
     return Promise.reject(error);

@@ -1,6 +1,7 @@
 """
 app/services/product_service.py
 """
+from __future__ import annotations
 
 import logging
 from app.extensions import supabase_admin
@@ -38,11 +39,15 @@ def get_product(product_id: str):
 
 def create_product(data: dict):
     try:
+        sales_price = data.get('sales_price') if data.get('sales_price') is not None else data.get('salesPrice', 0)
+        cost_price = data.get('cost_price') if data.get('cost_price') is not None else data.get('costPrice', 0)
+        product_type = data.get('product_type') or data.get('type') or 'software'
+
         payload = {
             'name': data['name'],
-            'product_type': data.get('product_type', 'software'),
-            'sales_price': float(data.get('sales_price', 0)),
-            'cost_price': float(data.get('cost_price', 0)),
+            'product_type': product_type,
+            'sales_price': float(sales_price),
+            'cost_price': float(cost_price),
             'description': data.get('description', ''),
             'notes': data.get('notes', ''),
             'status': 'active',
@@ -56,8 +61,27 @@ def create_product(data: dict):
 
 def update_product(product_id: str, data: dict):
     try:
-        allowed = ['name', 'product_type', 'sales_price', 'cost_price', 'description', 'notes', 'status']
-        payload = {k: v for k, v in data.items() if k in allowed}
+        key_map = {
+            'name': 'name',
+            'product_type': 'product_type',
+            'type': 'product_type',
+            'sales_price': 'sales_price',
+            'salesPrice': 'sales_price',
+            'cost_price': 'cost_price',
+            'costPrice': 'cost_price',
+            'description': 'description',
+            'notes': 'notes',
+            'status': 'status',
+        }
+        payload = {}
+        for k, v in data.items():
+            if k in key_map:
+                target_key = key_map[k]
+                if target_key in ('sales_price', 'cost_price'):
+                    payload[target_key] = float(v)
+                else:
+                    payload[target_key] = v
+
         resp = supabase_admin.table('products').update(payload).eq('id', product_id).execute()
         return resp.data[0] if resp.data else None, None
     except Exception as e:
@@ -84,11 +108,12 @@ def list_variants(product_id: str):
 
 def create_variant(product_id: str, data: dict):
     try:
+        add_price = data.get('additional_price') if data.get('additional_price') is not None else data.get('additionalPrice', 0)
         payload = {
             'product_id': product_id,
             'name': data['name'],
             'sku': data.get('sku', ''),
-            'additional_price': float(data.get('additional_price', 0)),
+            'additional_price': float(add_price),
             'description': data.get('description', ''),
             'status': 'active',
         }
@@ -100,8 +125,23 @@ def create_variant(product_id: str, data: dict):
 
 def update_variant(variant_id: str, data: dict):
     try:
-        allowed = ['name', 'sku', 'additional_price', 'description', 'status']
-        payload = {k: v for k, v in data.items() if k in allowed}
+        key_map = {
+            'name': 'name',
+            'sku': 'sku',
+            'additional_price': 'additional_price',
+            'additionalPrice': 'additional_price',
+            'description': 'description',
+            'status': 'status',
+        }
+        payload = {}
+        for k, v in data.items():
+            if k in key_map:
+                target_key = key_map[k]
+                if target_key == 'additional_price':
+                    payload[target_key] = float(v)
+                else:
+                    payload[target_key] = v
+
         resp = supabase_admin.table('product_variants').update(payload).eq('id', variant_id).execute()
         return resp.data[0] if resp.data else None, None
     except Exception as e:

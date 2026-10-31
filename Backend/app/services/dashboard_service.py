@@ -5,6 +5,7 @@ Role-specific dashboard data calculated from database aggregations.
 MRR = sum of active monthly sub totals + (yearly totals / 12).
 ARR = MRR × 12.
 """
+from __future__ import annotations
 
 import logging
 from datetime import date, timedelta

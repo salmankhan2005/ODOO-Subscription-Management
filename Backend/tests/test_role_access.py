@@ -5,7 +5,6 @@ import pytest
 
 from app import create_app
 from app.middleware import authentication
-from app.routes import portal_routes
 
 
 @pytest.fixture
@@ -57,7 +56,6 @@ def client(monkeypatch):
     ('role', 'path', 'method'),
     [
         ('staff', '/api/v1/portal/plans', 'get'),
-        ('staff', '/api/v1/portal/recommendations', 'get'),
         ('customer', '/api/v1/staff', 'get'),
         ('staff', '/api/v1/dashboard/revenue-summary', 'get'),
         ('staff', '/api/v1/dashboard/customer', 'get'),
@@ -105,24 +103,6 @@ def test_customer_cannot_read_another_customers_subscription(client, monkeypatch
     )
 
     assert response.status_code == 403
-
-
-def test_customer_can_load_recommendations_for_their_profile(client, monkeypatch):
-    client.set_test_role('customer', customer_id='customer-one')
-    expected = {'plans': [{'id': 'popular-plan'}], 'optimizer_recommendations': []}
-    monkeypatch.setattr(
-        portal_routes,
-        'get_customer_recommendations',
-        lambda customer_id: (expected, None),
-    )
-
-    response = client.get(
-        '/api/v1/portal/recommendations',
-        headers={'Authorization': 'Bearer customer-test-token'},
-    )
-
-    assert response.status_code == 200, response.get_json()
-    assert response.get_json()['data'] == expected
 
 
 def test_customer_sees_only_currently_available_plans(client, monkeypatch):

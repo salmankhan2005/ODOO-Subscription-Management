@@ -67,7 +67,7 @@ export const QuotationManagement: React.FC = () => {
   const openNewWizard = () => {
     setWizardStep(1);
     const defaultProduct = products[0];
-    const defaultVariant = defaultProduct?.variants[1] || defaultProduct?.variants[0]; // Prefer Odoo variant
+    const defaultVariant = defaultProduct?.variants?.[1] || defaultProduct?.variants?.[0]; // Prefer Odoo variant
     const unitPrice = (defaultProduct?.salesPrice || 1200) + (defaultVariant?.additionalPrice || 560);
     const taxRate = 18;
     const taxAmount = (unitPrice * taxRate) / 100;
@@ -143,7 +143,7 @@ export const QuotationManagement: React.FC = () => {
   const handleProductChange = (lineId: string, prodId: string) => {
     const p = products.find((x) => x.id === prodId);
     if (!p) return;
-    const variant = p.variants[0];
+    const variant = p.variants?.[0];
     const unitPrice = p.salesPrice + (variant?.additionalPrice || 0);
     const taxAmount = (unitPrice * 18) / 100;
 

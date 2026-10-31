@@ -1,6 +1,7 @@
 """
 app/routes/invoice_routes.py
 """
+from __future__ import annotations
 
 from flask import Blueprint, request, send_file
 import io

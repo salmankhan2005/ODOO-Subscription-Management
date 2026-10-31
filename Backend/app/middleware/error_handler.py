@@ -1,6 +1,7 @@
 """
 app/middleware/error_handler.py — Centralised exception handlers.
 """
+from __future__ import annotations
 
 import logging
 from flask import jsonify

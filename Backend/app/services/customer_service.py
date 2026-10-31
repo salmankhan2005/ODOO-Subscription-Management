@@ -1,6 +1,7 @@
 """
 app/services/customer_service.py
 """
+from __future__ import annotations
 
 import logging
 from app.extensions import supabase_admin

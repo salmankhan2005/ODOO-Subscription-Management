@@ -10,16 +10,29 @@ import {
   Layers,
   Repeat,
   Receipt,
-  Users
+  Users,
+  Radio,
+  Sliders,
+  DollarSign,
+  TrendingUp,
+  Cpu,
+  Server,
+  HelpCircle,
+  Check,
+  X as XIcon,
+  PhoneCall
 } from 'lucide-react';
 import { UserRole } from '../../types';
+import { IsometricDotGrid } from './IsometricDotGrid';
+import { IsometricSubscriptionEngine } from './IsometricSubscriptionEngine';
+import { IsometricInvoicePipeline } from './IsometricInvoicePipeline';
+import { IsometricDunningVault } from './IsometricDunningVault';
 
 interface ShowcaseLandingProps {
   onLaunch: (role: UserRole) => void;
 }
 
 export const ShowcaseLanding: React.FC<ShowcaseLandingProps> = ({ onLaunch }) => {
-
   // Interactive Variant Pricing Calculator State
   const [selectedVariant, setSelectedVariant] = useState<'std' | 'odoo' | 'ent'>('odoo');
   const [includeDunning, setIncludeDunning] = useState(true);
@@ -29,6 +42,18 @@ export const ShowcaseLanding: React.FC<ShowcaseLandingProps> = ({ onLaunch }) =>
 
   // Interactive Dunning Simulator State
   const [simState, setSimState] = useState<'idle' | 'running' | 'recovered'>('idle');
+
+  // ROI Simulator State
+  const [roiSubscribers, setRoiSubscribers] = useState(240);
+  const [roiBasePrice, setRoiBasePrice] = useState(1200);
+  const [roiIncludeOdoo, setRoiIncludeOdoo] = useState(true);
+  const [roiDunningRate, setRoiDunningRate] = useState(92);
+
+  // Active Isometric View Tab
+  const [activeIsoTab, setActiveIsoTab] = useState<'all' | 'recurring' | 'pipeline' | 'dunning'>('all');
+
+  // FAQ state
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   // Calculate pricing live
   const basePrice = 1200;
@@ -43,6 +68,13 @@ export const ShowcaseLanding: React.FC<ShowcaseLandingProps> = ({ onLaunch }) =>
   const taxAmount = Math.round(subtotalAfterInterval * taxRate);
   const finalTotal = subtotalAfterInterval + taxAmount;
 
+  // ROI Calculations
+  const effectivePerSub = roiBasePrice + (roiIncludeOdoo ? 560 : 0);
+  const totalMonthlyRev = roiSubscribers * effectivePerSub;
+  const totalAnnualRev = totalMonthlyRev * 12;
+  const annualSavedDunning = Math.round((totalMonthlyRev * 0.08 * (roiDunningRate / 100)) * 12);
+  const adminHoursSaved = Math.round(roiSubscribers * 0.75);
+
   const runDunningSimulation = () => {
     setSimState('running');
     setTimeout(() => {
@@ -50,34 +82,57 @@ export const ShowcaseLanding: React.FC<ShowcaseLandingProps> = ({ onLaunch }) =>
     }, 1800);
   };
 
-  return (
-    <div className="min-h-screen bg-[#F7FAFA] text-slate-100 pb-24">
-      {/* Hero Section */}
-      <section className="relative pt-12 md:pt-20 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden">
-        {/* Ambient atmospheric glows */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-indigo-600/15 blur-[120px] rounded-full pointer-events-none" />
-        <div className="absolute top-1/3 right-10 w-[350px] h-[250px] bg-cyan-500/10 blur-[100px] rounded-full pointer-events-none" />
+  const faqs = [
+    {
+      q: 'How does the +$560 Odoo Variant Adder work?',
+      a: 'The Odoo variant calculates automatically during quote creation or plan assignment. It appends the $560 monthly add-on fee to software base prices, auto-provisions two-way journal sync, and flags invoices for ERP reconciliation.',
+    },
+    {
+      q: 'How does the LiveKit AI Voice Agent support customers?',
+      a: 'Customers can tap the fixed AI Voice button in their portal. Powered by WebRTC via LiveKit Cloud (wss://oddoo-hackathon-ulmfmcmg.livekit.cloud), the voice agent answers questions about plan statuses, outstanding invoice balances, and billing schedules in real time.',
+    },
+    {
+      q: 'How are statutory GST and VAT taxes calculated?',
+      a: 'Brightloop evaluates jurisdiction rules dynamically on quotation lines and recurring billing items. Products mapped to 18% GST have their statutory tax amounts segregated and itemized in generated PDF invoices.',
+    },
+    {
+      q: 'Can staff and sales representatives convert quotes to subscriptions?',
+      a: 'Yes. Sales teams generate proposals from pre-configured templates. Once confirmed by the customer, a single click converts the quotation into an active subscription and queues the initial settlement invoice.',
+    },
+  ];
 
-        <div className="text-center max-w-3xl mx-auto space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-950/60 border border-indigo-800/60 text-xs font-semibold text-indigo-300">
+  return (
+    <div className="relative min-h-screen bg-slate-950 text-slate-100 pb-24 overflow-x-hidden">
+      {/* ── Background Isometric Dot Grid ───────────────────────────── */}
+      <IsometricDotGrid />
+
+      {/* Atmospheric Ambient Glows */}
+      <div className="pointer-events-none absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-175 h-87.5 bg-indigo-600/15 blur-[140px] rounded-full" />
+      <div className="pointer-events-none absolute top-1/3 right-10 w-112.5 h-75 bg-cyan-500/10 blur-[120px] rounded-full" />
+
+      {/* ── Hero Section ────────────────────────────────────────────── */}
+      <section className="relative pt-16 md:pt-24 pb-14 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="text-center max-w-3xl mx-auto space-y-5">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-950/80 border border-indigo-700/60 text-xs font-semibold text-indigo-300 shadow-md">
             <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-            <span>Brightloop Software · Enterprise Recurring Engine</span>
+            <span>Brightloop Software · Recurly-Grade Recurring Billing</span>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white tracking-tight font-display text-balance">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white tracking-tight font-display text-balance leading-tight">
             Autonomous Subscription Billing & Revenue Recovery
           </h1>
 
           <p className="text-base sm:text-lg text-slate-300 leading-relaxed text-balance">
-            Inspired by Recurly and engineered for modern enterprises. Replace spreadsheet chaos with
-            automated quote-to-cash workflows, dynamic variant pricing, and AI dunning recovery.
+            Inspired by Recurly and built for modern enterprises. Replace spreadsheet chaos with
+            automated quote-to-cash workflows, dynamic Odoo variant pricing, and an integrated
+            LiveKit AI voice support agent.
           </p>
 
-          {/* Quick Launch Buttons */}
+          {/* Quick Portal Launch Buttons */}
           <div className="pt-4 flex flex-wrap items-center justify-center gap-3">
             <button
               onClick={() => onLaunch('admin')}
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-all shadow-lg shadow-indigo-600/30"
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-all shadow-xl shadow-indigo-600/30 active:scale-95"
             >
               <ShieldCheck className="w-4 h-4" />
               <span>Launch Admin Console</span>
@@ -85,14 +140,14 @@ export const ShowcaseLanding: React.FC<ShowcaseLandingProps> = ({ onLaunch }) =>
             </button>
             <button
               onClick={() => onLaunch('staff')}
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-slate-200 font-semibold text-sm transition-all"
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-slate-200 font-semibold text-sm transition-all shadow-lg active:scale-95"
             >
               <Users className="w-4 h-4 text-emerald-400" />
               <span>Staff / Sales View</span>
             </button>
             <button
               onClick={() => onLaunch('customer')}
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-slate-200 font-semibold text-sm transition-all"
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-slate-200 font-semibold text-sm transition-all shadow-lg active:scale-95"
             >
               <Repeat className="w-4 h-4 text-amber-400" />
               <span>Customer Self-Service</span>
@@ -100,415 +155,415 @@ export const ShowcaseLanding: React.FC<ShowcaseLandingProps> = ({ onLaunch }) =>
           </div>
         </div>
 
-        {/* Bento Grid Showcase */}
-        <div id="bento-overview" className="mt-14 grid grid-cols-1 md:grid-cols-12 gap-5">
-          {/* Card 1: Real-time MRR & ARR Health */}
-          <BentoCard glow className="md:col-span-8 flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between pb-3 border-b border-slate-800/80 mb-4">
-                <span className="text-xs uppercase tracking-wider text-slate-400 font-semibold">
-                  Live Recurring Telemetry
-                </span>
-                <span className="text-xs font-mono text-emerald-400 font-semibold">
-                  +18.4% QoQ Growth
-                </span>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div>
-                  <div className="text-xs text-slate-400">Monthly Recurring (MRR)</div>
-                  <div className="text-2xl sm:text-3xl font-bold font-mono text-white mt-1">
-                    $94,820
-                  </div>
-                  <div className="text-[11px] text-slate-400 mt-0.5">· 42 active contracts</div>
-                </div>
-                <div>
-                  <div className="text-xs text-slate-400">Annual Run-Rate (ARR)</div>
-                  <div className="text-2xl sm:text-3xl font-bold font-mono text-indigo-400 mt-1">
-                    $1.13M
-                  </div>
-                  <div className="text-[11px] text-slate-400 mt-0.5">· 100% automated cadence</div>
-                </div>
-                <div>
-                  <div className="text-xs text-slate-400">Collection Rate</div>
-                  <div className="text-2xl sm:text-3xl font-bold font-mono text-emerald-400 mt-1">
-                    99.2%
-                  </div>
-                  <div className="text-[11px] text-slate-400 mt-0.5">· Automated tax & invoices</div>
-                </div>
-                <div>
-                  <div className="text-xs text-slate-400">Churn Risk Intercept</div>
-                  <div className="text-2xl sm:text-3xl font-bold font-mono text-cyan-400 mt-1">
-                    0.8%
-                  </div>
-                  <div className="text-[11px] text-slate-400 mt-0.5">· Neural retry recovery</div>
-                </div>
-              </div>
+        {/* ── Realtime System Telemetry & SLA Strip ────────────────── */}
+        <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-3 max-w-5xl mx-auto">
+          <div className="p-3.5 rounded-xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-md flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
+              <CheckCircle2 className="w-4 h-4" />
             </div>
-
-            {/* Simulated mini chart bar */}
-            <div className="mt-6 pt-4 border-t border-slate-800/60">
-              <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
-                <span>Monthly Billing Pipeline Capacity</span>
-                <span className="font-mono text-slate-300">Next batch: 12 days</span>
-              </div>
-              <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden flex">
-                <div className="w-[68%] bg-indigo-500 rounded-full" />
-                <div className="w-[24%] bg-cyan-400 rounded-full" />
-                <div className="w-[8%] bg-emerald-400 rounded-full" />
-              </div>
-              <div className="flex items-center gap-4 text-[11px] text-slate-400 mt-2">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-indigo-500" /> Business Software
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-cyan-400" /> Dunning Engine
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400" /> Concierge SLA
-                </span>
-              </div>
-            </div>
-          </BentoCard>
-
-          {/* Card 2: Interactive Dunning Recovery */}
-          <BentoCard glow id="dunning-engine" className="md:col-span-4 flex flex-col justify-between">
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <div className="p-1.5 rounded-lg bg-indigo-600/20 text-indigo-400">
-                  <Zap className="w-4 h-4" />
-                </div>
-                <h3 className="text-base font-bold text-white">AI Dunning Orchestrator</h3>
-              </div>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Recovers failed card charges before they escalate to involuntary churn.
+              <div className="text-xs font-mono font-bold text-white">99.99% SLA</div>
+              <div className="text-[10px] text-slate-400">Continuous Uptime</div>
+            </div>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-md flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400">
+              <Cpu className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="text-xs font-mono font-bold text-white">&lt; 120ms Latency</div>
+              <div className="text-[10px] text-slate-400">JWT Token Validation</div>
+            </div>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-md flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-cyan-500/10 text-cyan-400">
+              <Radio className="w-4 h-4 animate-pulse" />
+            </div>
+            <div>
+              <div className="text-xs font-mono font-bold text-white">LiveKit Cloud</div>
+              <div className="text-[10px] text-slate-400">WebRTC Voice Bridge</div>
+            </div>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-md flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-purple-500/10 text-purple-400">
+              <Sparkles className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="text-xs font-mono font-bold text-white">+$560 Adder</div>
+              <div className="text-[10px] text-slate-400">Odoo Variant Sync</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 3D Isometric Animation Section ──────────────────────────── */}
+      <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="text-center max-w-2xl mx-auto mb-10 space-y-2">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-950/70 border border-indigo-700/50 text-indigo-300">
+            <Layers className="w-3.5 h-3.5 text-indigo-400" />
+            <span>Interactive 3D Isometric Engines</span>
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            Triple Autonomous Execution Architectures
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-400">
+            Real-time visual telemetry representing Brightloop's three core computational pipelines.
+          </p>
+
+          {/* View Filter Pill */}
+          <div className="pt-2 flex items-center justify-center gap-1.5">
+            <button
+              onClick={() => setActiveIsoTab('all')}
+              className={`px-3 py-1 rounded-lg text-xs font-mono transition ${
+                activeIsoTab === 'all'
+                  ? 'bg-indigo-600 text-white font-bold'
+                  : 'bg-slate-900 text-slate-400 hover:text-white'
+              }`}
+            >
+              All Engines
+            </button>
+            <button
+              onClick={() => setActiveIsoTab('recurring')}
+              className={`px-3 py-1 rounded-lg text-xs font-mono transition ${
+                activeIsoTab === 'recurring'
+                  ? 'bg-indigo-600 text-white font-bold'
+                  : 'bg-slate-900 text-slate-400 hover:text-white'
+              }`}
+            >
+              1. Ledger Stack
+            </button>
+            <button
+              onClick={() => setActiveIsoTab('pipeline')}
+              className={`px-3 py-1 rounded-lg text-xs font-mono transition ${
+                activeIsoTab === 'pipeline'
+                  ? 'bg-purple-600 text-white font-bold'
+                  : 'bg-slate-900 text-slate-400 hover:text-white'
+              }`}
+            >
+              2. Invoice Pipeline
+            </button>
+            <button
+              onClick={() => setActiveIsoTab('dunning')}
+              className={`px-3 py-1 rounded-lg text-xs font-mono transition ${
+                activeIsoTab === 'dunning'
+                  ? 'bg-emerald-600 text-white font-bold'
+                  : 'bg-slate-900 text-slate-400 hover:text-white'
+              }`}
+            >
+              3. Dunning Vault
+            </button>
+          </div>
+        </div>
+
+        {/* 3D Isometric Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {(activeIsoTab === 'all' || activeIsoTab === 'recurring') && (
+            <div className={activeIsoTab !== 'all' ? 'md:col-span-3 max-w-xl mx-auto w-full' : ''}>
+              <IsometricSubscriptionEngine />
+            </div>
+          )}
+          {(activeIsoTab === 'all' || activeIsoTab === 'pipeline') && (
+            <div className={activeIsoTab !== 'all' ? 'md:col-span-3 max-w-xl mx-auto w-full' : ''}>
+              <IsometricInvoicePipeline />
+            </div>
+          )}
+          {(activeIsoTab === 'all' || activeIsoTab === 'dunning') && (
+            <div className={activeIsoTab !== 'all' ? 'md:col-span-3 max-w-xl mx-auto w-full' : ''}>
+              <IsometricDunningVault />
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ── Interactive ROI & Revenue Margin Simulator ─────────────── */}
+      <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <BentoCard glow className="p-6 md:p-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between pb-6 border-b border-slate-800 gap-4">
+            <div>
+              <span className="text-xs uppercase tracking-wider text-cyan-400 font-semibold font-mono">
+                Interactive Economics Engine
+              </span>
+              <h2 className="text-xl sm:text-2xl font-bold text-white mt-1">
+                Subscription ROI & Revenue Acceleration Calculator
+              </h2>
+              <p className="text-xs text-slate-400 mt-1">
+                Model real recurring yields with Odoo adders, statutory tax modeling, and AI dunning recovery.
               </p>
-
-              <div className="mt-4 p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-400">Target Invoice</span>
-                  <span className="font-mono text-slate-200">INV-2026-1050 ($1,760)</span>
-                </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-400">Customer</span>
-                  <span className="text-slate-200 font-medium">Marcus Chen (Nexus Cloud)</span>
-                </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-400">Engine Status</span>
-                  {simState === 'idle' && (
-                    <span className="text-amber-400 font-mono text-[11px]">Soft Limit Declined</span>
-                  )}
-                  {simState === 'running' && (
-                    <span className="text-cyan-400 font-mono text-[11px] flex items-center gap-1">
-                      <RefreshCw className="w-3 h-3 animate-spin" /> Retrying via Rail 2...
-                    </span>
-                  )}
-                  {simState === 'recovered' && (
-                    <span className="text-emerald-400 font-mono text-[11px] flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3" /> Recovered ($1,760 Paid)
-                    </span>
-                  )}
-                </div>
-              </div>
             </div>
-
-            <div className="mt-5">
-              <button
-                onClick={runDunningSimulation}
-                disabled={simState === 'running'}
-                className="w-full py-2.5 px-3 rounded-xl bg-indigo-600/90 hover:bg-indigo-600 text-white text-xs font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                {simState === 'running' ? (
-                  <>
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    <span>Executing Fallback Rail...</span>
-                  </>
-                ) : simState === 'recovered' ? (
-                  <>
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300" />
-                    <span>Run Another Simulation</span>
-                  </>
-                ) : (
-                  <>
-                    <Zap className="w-3.5 h-3.5" />
-                    <span>Trigger Smart Dunning Retry</span>
-                  </>
-                )}
-              </button>
+            <div className="flex items-center gap-2">
+              <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+                LIVE SIMULATOR
+              </span>
             </div>
-          </BentoCard>
+          </div>
 
-          {/* Card 3: Interactive Variant Calculator */}
-          <BentoCard id="interactive-calculator" className="md:col-span-12">
-            <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-slate-800/80 mb-6 gap-3">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-6">
+            {/* Controls */}
+            <div className="lg:col-span-7 space-y-6">
+              {/* Slider 1: Subscriber Count */}
               <div>
-                <span className="text-xs uppercase tracking-wider text-indigo-400 font-semibold">
-                  Odoo Challenge Core Requirement
-                </span>
-                <h2 className="text-xl font-bold text-white tracking-tight mt-0.5">
-                  Interactive Product & Variant Pricing Engine
-                </h2>
-                <p className="text-xs text-slate-300 mt-1">
-                  Brightloop admin configures base software and variant markups (e.g. Odoo brand edition adds +$560).
-                </p>
+                <div className="flex justify-between text-xs font-semibold text-slate-300 mb-2">
+                  <span>Active Subscribers</span>
+                  <span className="font-mono text-indigo-400 font-bold">{roiSubscribers} Accounts</span>
+                </div>
+                <input
+                  type="range"
+                  min="20"
+                  max="1000"
+                  step="10"
+                  value={roiSubscribers}
+                  onChange={(e) => setRoiSubscribers(Number(e.target.value))}
+                  className="w-full accent-indigo-500 h-2 bg-slate-800 rounded-lg cursor-pointer"
+                />
               </div>
 
-              {/* Cadence selector */}
-              <div className="flex items-center gap-1 p-1 bg-slate-900 rounded-lg border border-slate-800 self-start md:self-auto">
+              {/* Slider 2: Base Subscription Tier */}
+              <div>
+                <div className="flex justify-between text-xs font-semibold text-slate-300 mb-2">
+                  <span>Base Subscription Price ($/mo)</span>
+                  <span className="font-mono text-cyan-400 font-bold">${roiBasePrice}/mo</span>
+                </div>
+                <input
+                  type="range"
+                  min="300"
+                  max="3000"
+                  step="50"
+                  value={roiBasePrice}
+                  onChange={(e) => setRoiBasePrice(Number(e.target.value))}
+                  className="w-full accent-cyan-500 h-2 bg-slate-800 rounded-lg cursor-pointer"
+                />
+              </div>
+
+              {/* Toggle 3: Odoo Edition Adder */}
+              <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-bold text-white flex items-center gap-2">
+                    <span>Odoo Edition Variant Adder (+ $560/mo)</span>
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300">
+                      CHALLENGE SPEC
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-slate-400 mt-0.5">
+                    Includes automatic 2-way journal synchronization and ERP ledger reconciliation.
+                  </div>
+                </div>
                 <button
-                  onClick={() => setBillingInterval('monthly')}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                    billingInterval === 'monthly' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
+                  type="button"
+                  onClick={() => setRoiIncludeOdoo(!roiIncludeOdoo)}
+                  className={`w-12 h-6 rounded-full transition-colors relative ${
+                    roiIncludeOdoo ? 'bg-indigo-600' : 'bg-slate-700'
                   }`}
                 >
-                  Monthly Cadence
+                  <span
+                    className={`block w-4 h-4 rounded-full bg-white transition-transform ${
+                      roiIncludeOdoo ? 'translate-x-7' : 'translate-x-1'
+                    }`}
+                  />
                 </button>
-                <button
-                  onClick={() => setBillingInterval('yearly')}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                    billingInterval === 'yearly' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  Yearly Cadence (15% Off)
-                </button>
+              </div>
+
+              {/* Slider 4: Dunning Recovery Rate */}
+              <div>
+                <div className="flex justify-between text-xs font-semibold text-slate-300 mb-2">
+                  <span>AI Dunning Neural Recovery Rate</span>
+                  <span className="font-mono text-emerald-400 font-bold">{roiDunningRate}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="60"
+                  max="99"
+                  step="1"
+                  value={roiDunningRate}
+                  onChange={(e) => setRoiDunningRate(Number(e.target.value))}
+                  className="w-full accent-emerald-500 h-2 bg-slate-800 rounded-lg cursor-pointer"
+                />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-              {/* Controls */}
-              <div className="lg:col-span-7 space-y-5">
+            {/* Results Bento Metrics */}
+            <div className="lg:col-span-5 p-6 rounded-2xl bg-linear-to-br from-indigo-950/60 via-slate-900 to-slate-950 border border-indigo-500/40 shadow-xl flex flex-col justify-between">
+              <div className="space-y-4">
+                <span className="text-xs font-bold uppercase tracking-wider text-indigo-300 font-mono">
+                  Projected Financial Yield
+                </span>
+
                 <div>
-                  <label className="text-xs font-semibold text-slate-300 block mb-2">
-                    1. Select Product Variant (Brand Edition)
-                  </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <button
-                      onClick={() => setSelectedVariant('std')}
-                      className={`p-3 rounded-xl text-left border transition-all ${
-                        selectedVariant === 'std'
-                          ? 'bg-indigo-600/15 border-indigo-500 text-white'
-                          : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700'
-                      }`}
-                    >
-                      <div className="text-xs font-semibold">Standard Edition</div>
-                      <div className="text-[11px] text-slate-400 mt-0.5">Base $1,200/mo</div>
-                    </button>
-                    <button
-                      onClick={() => setSelectedVariant('odoo')}
-                      className={`p-3 rounded-xl text-left border transition-all ${
-                        selectedVariant === 'odoo'
-                          ? 'bg-indigo-600/15 border-indigo-500 text-white shadow-lg shadow-indigo-500/10'
-                          : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold">Odoo Brand</span>
-                        <span className="text-[10px] font-mono text-indigo-400 font-semibold">+560</span>
-                      </div>
-                      <div className="text-[11px] text-slate-400 mt-0.5">$1,760/mo/instance</div>
-                    </button>
-                    <button
-                      onClick={() => setSelectedVariant('ent')}
-                      className={`p-3 rounded-xl text-left border transition-all ${
-                        selectedVariant === 'ent'
-                          ? 'bg-indigo-600/15 border-indigo-500 text-white'
-                          : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold">Enterprise</span>
-                        <span className="text-[10px] font-mono text-indigo-400 font-semibold">+1,450</span>
-                      </div>
-                      <div className="text-[11px] text-slate-400 mt-0.5">$2,650/mo/instance</div>
-                    </button>
+                  <div className="text-xs text-slate-400">Monthly Recurring Revenue (MRR)</div>
+                  <div className="text-3xl sm:text-4xl font-extrabold font-mono text-white mt-1">
+                    ${totalMonthlyRev.toLocaleString()}
                   </div>
                 </div>
 
-                {/* Seat Quantity */}
-                <div>
-                  <div className="flex items-center justify-between text-xs font-semibold text-slate-300 mb-2">
-                    <span>2. Number of Provisioned Seats</span>
-                    <span className="font-mono text-indigo-400 font-bold">{seats} Seats</span>
+                <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-800">
+                  <div>
+                    <div className="text-[11px] text-slate-400">Annual Run-Rate (ARR)</div>
+                    <div className="text-lg font-bold font-mono text-indigo-400 mt-0.5">
+                      ${(totalAnnualRev / 1000000).toFixed(2)}M
+                    </div>
                   </div>
-                  <input
-                    type="range"
-                    min="1"
-                    max="50"
-                    value={seats}
-                    onChange={(e) => setSeats(Number(e.target.value))}
-                    className="w-full accent-indigo-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
-                  />
-                  <div className="flex justify-between text-[10px] text-slate-400 font-mono mt-1">
-                    <span>1</span>
-                    <span>10</span>
-                    <span>25</span>
-                    <span>50 Seats</span>
+                  <div>
+                    <div className="text-[11px] text-slate-400">Recovered from Churn</div>
+                    <div className="text-lg font-bold font-mono text-emerald-400 mt-0.5">
+                      +${annualSavedDunning.toLocaleString()}/yr
+                    </div>
                   </div>
                 </div>
 
-                {/* Optional Modular Add-ons */}
-                <div>
-                  <label className="text-xs font-semibold text-slate-300 block mb-2">
-                    3. Modular Subscription Add-Ons
-                  </label>
-                  <div className="space-y-2">
-                    <label className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-slate-800 cursor-pointer hover:border-slate-700">
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="checkbox"
-                          checked={includeDunning}
-                          onChange={(e) => setIncludeDunning(e.target.checked)}
-                          className="rounded border-slate-700 bg-slate-800 text-indigo-600 focus:ring-0"
-                        />
-                        <div>
-                          <div className="text-xs font-semibold text-slate-200">
-                            Automated AI Dunning & Payment Recovery
-                          </div>
-                          <div className="text-[11px] text-slate-400">
-                            Neural retry scheduling & smart grace periods
-                          </div>
-                        </div>
-                      </div>
-                      <span className="text-xs font-mono text-slate-300">+$380/mo</span>
-                    </label>
-
-                    <label className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-slate-800 cursor-pointer hover:border-slate-700">
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="checkbox"
-                          checked={includeSla}
-                          onChange={(e) => setIncludeSla(e.target.checked)}
-                          className="rounded border-slate-700 bg-slate-800 text-indigo-600 focus:ring-0"
-                        />
-                        <div>
-                          <div className="text-xs font-semibold text-slate-200">
-                            Priority SLA & Dedicated Concierge Support
-                          </div>
-                          <div className="text-[11px] text-slate-400">
-                            15-minute response guarantee + dedicated engineer
-                          </div>
-                        </div>
-                      </div>
-                      <span className="text-xs font-mono text-slate-300">+$650/mo</span>
-                    </label>
-                  </div>
+                <div className="pt-2 text-xs text-slate-400 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Saves approximately <strong>{adminHoursSaved} manual admin hours</strong> each year.</span>
                 </div>
               </div>
 
-              {/* Live Preview Summary Card */}
-              <div className="lg:col-span-5 p-5 rounded-2xl bg-gradient-to-b from-[#FFFFFF] to-[#FFFFFF] border border-slate-700/80 shadow-xl space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                  <span className="text-xs font-bold text-slate-200 uppercase tracking-wider">
-                    Live Calculation Breakdown
-                  </span>
-                  <span className="text-[11px] font-mono text-emerald-400">Automated 18% Tax</span>
-                </div>
-
-                <div className="space-y-2 text-xs">
-                  <div className="flex justify-between text-slate-300">
-                    <span>
-                      Software Base + {selectedVariant === 'odoo' ? 'Odoo Brand' : selectedVariant === 'ent' ? 'Enterprise' : 'Standard'}
-                    </span>
-                    <span className="font-mono text-slate-200">${unitPrice} × {seats}</span>
-                  </div>
-                  <div className="flex justify-between text-slate-400">
-                    <span>Base Subtotal</span>
-                    <span className="font-mono">${softwareSubtotal.toLocaleString()}</span>
-                  </div>
-
-                  {addOnSubtotal > 0 && (
-                    <div className="flex justify-between text-slate-400">
-                      <span>Add-ons Total</span>
-                      <span className="font-mono">+${addOnSubtotal.toLocaleString()}</span>
-                    </div>
-                  )}
-
-                  {billingInterval === 'yearly' && (
-                    <div className="flex justify-between text-emerald-400">
-                      <span>Yearly Contract Incentive</span>
-                      <span className="font-mono">-15%</span>
-                    </div>
-                  )}
-
-                  <div className="flex justify-between text-slate-400 pt-2 border-t border-slate-800">
-                    <span>Tax (18% Statutory GST/VAT)</span>
-                    <span className="font-mono">+${taxAmount.toLocaleString()}</span>
-                  </div>
-                </div>
-
-                <div className="pt-3 border-t border-slate-700 flex items-baseline justify-between">
-                  <div>
-                    <div className="text-xs text-slate-400">Total Billed ({billingInterval})</div>
-                    <div className="text-2xl sm:text-3xl font-extrabold font-mono text-white mt-0.5">
-                      ${finalTotal.toLocaleString()}
-                    </div>
-                  </div>
-                  <span className="text-[11px] text-slate-400">Net 30 Days Terms</span>
-                </div>
-
+              <div className="pt-6">
                 <button
                   onClick={() => onLaunch('admin')}
-                  className="w-full py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-all shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2"
+                  className="w-full py-3 rounded-xl bg-linear-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-semibold text-xs transition shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2"
                 >
-                  <span>Build Quote in Application</span>
+                  <span>Deploy Pricing to Catalog</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
-          </BentoCard>
+          </div>
+        </BentoCard>
+      </section>
 
-          {/* Card 4: Quote to Cash Workflow */}
-          <BentoCard id="quote-to-cash" className="md:col-span-6">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="p-1.5 rounded-lg bg-emerald-600/20 text-emerald-400">
-                <Receipt className="w-4 h-4" />
+      {/* ── Enterprise Comparison Matrix ────────────────────────────── */}
+      <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="text-center max-w-2xl mx-auto mb-10 space-y-2">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            Brightloop vs Traditional ERP Billing
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-400">
+            Why modern enterprises choose autonomous quote-to-cash over legacy spreadsheet manual operations.
+          </p>
+        </div>
+
+        <BentoCard className="p-0 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-900/90 text-[11px] uppercase tracking-wider text-slate-400 border-b border-slate-800">
+                <tr>
+                  <th className="px-6 py-4 font-semibold">Capability</th>
+                  <th className="px-6 py-4 font-semibold text-indigo-400">Brightloop SMS</th>
+                  <th className="px-6 py-4 font-semibold text-slate-400">Legacy ERP / Spreadsheets</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60">
+                <tr className="hover:bg-slate-800/30 transition">
+                  <td className="px-6 py-4 font-medium text-white">
+                    Automated Recurring Execution
+                    <div className="text-[11px] text-slate-400">Daily cron dispatcher with auto-invoice creation</div>
+                  </td>
+                  <td className="px-6 py-4 font-mono font-semibold text-emerald-400 flex items-center gap-1.5">
+                    <Check className="w-4 h-4" /> 100% Autonomous (0 min)
+                  </td>
+                  <td className="px-6 py-4 font-mono text-slate-400">
+                    Manual batch runs (3-5 days/mo)
+                  </td>
+                </tr>
+
+                <tr className="hover:bg-slate-800/30 transition">
+                  <td className="px-6 py-4 font-medium text-white">
+                    Dynamic Variant Pricing (+560 Adder)
+                    <div className="text-[11px] text-slate-400">Odoo edition adders applied with real-time margins</div>
+                  </td>
+                  <td className="px-6 py-4 font-mono font-semibold text-emerald-400 flex items-center gap-1.5">
+                    <Check className="w-4 h-4" /> Native Catalog Rules
+                  </td>
+                  <td className="px-6 py-4 font-mono text-rose-400 flex items-center gap-1.5">
+                    <XIcon className="w-4 h-4" /> Hardcoded Excel formulas
+                  </td>
+                </tr>
+
+                <tr className="hover:bg-slate-800/30 transition">
+                  <td className="px-6 py-4 font-medium text-white">
+                    LiveKit Real-time Voice Support
+                    <div className="text-[11px] text-slate-400">WebRTC voice agent for instant customer billing help</div>
+                  </td>
+                  <td className="px-6 py-4 font-mono font-semibold text-emerald-400 flex items-center gap-1.5">
+                    <Check className="w-4 h-4" /> Built-in LiveKit Cloud
+                  </td>
+                  <td className="px-6 py-4 font-mono text-rose-400 flex items-center gap-1.5">
+                    <XIcon className="w-4 h-4" /> None / Separate ticketing
+                  </td>
+                </tr>
+
+                <tr className="hover:bg-slate-800/30 transition">
+                  <td className="px-6 py-4 font-medium text-white">
+                    AI Dunning Recovery Pipeline
+                    <div className="text-[11px] text-slate-400">Adaptive retry cascading across Stripe, Wire, and UPI</div>
+                  </td>
+                  <td className="px-6 py-4 font-mono font-semibold text-emerald-400 flex items-center gap-1.5">
+                    <Check className="w-4 h-4" /> 99.2% Recovery
+                  </td>
+                  <td className="px-6 py-4 font-mono text-rose-400 flex items-center gap-1.5">
+                    <XIcon className="w-4 h-4" /> Manual collections chasing
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </BentoCard>
+      </section>
+
+      {/* ── Interactive FAQ Section ─────────────────────────────────── */}
+      <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
+        <div className="text-center mb-8 space-y-1">
+          <h2 className="text-2xl font-bold text-white">Frequently Answered Questions</h2>
+          <p className="text-xs text-slate-400">Everything you need to know about the Brightloop billing architecture.</p>
+        </div>
+
+        <div className="space-y-3">
+          {faqs.map((f, i) => (
+            <div
+              key={i}
+              onClick={() => setOpenFaq(openFaq === i ? null : i)}
+              className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 cursor-pointer hover:border-slate-700 transition"
+            >
+              <div className="flex items-center justify-between font-semibold text-xs text-white">
+                <span>{f.q}</span>
+                <span className="text-indigo-400 text-sm font-mono">{openFaq === i ? '−' : '+'}</span>
               </div>
-              <h3 className="text-base font-bold text-white">Quote-to-Subscription Pipeline</h3>
+              {openFaq === i && (
+                <div className="mt-2.5 text-xs text-slate-300 leading-relaxed pt-2 border-t border-slate-800/80">
+                  {f.a}
+                </div>
+              )}
             </div>
-            <p className="text-xs text-slate-300 leading-relaxed mb-4">
-              Sales reps construct proposals from pre-approved templates. When customers accept,
-              one click converts quotes into active subscriptions with scheduled invoices.
+          ))}
+        </div>
+      </section>
+
+      {/* ── Bottom Call To Action ───────────────────────────────────── */}
+      <section className="mt-12 px-4 max-w-5xl mx-auto text-center">
+        <div className="p-8 md:p-12 rounded-3xl bg-linear-to-r from-indigo-950 via-slate-900 to-indigo-950 border border-indigo-500/40 shadow-2xl relative overflow-hidden">
+          <div className="relative z-10 max-w-2xl mx-auto space-y-4">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
+              Ready to automate recurring billing with Recurly-grade speed?
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-300">
+              Sign in with your admin, staff, or customer account to explore the fully functional application.
             </p>
-
-            <div className="space-y-2 text-xs">
-              <div className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-900/60 border border-slate-800/80">
-                <span className="w-5 h-5 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center font-mono text-[10px] font-bold">1</span>
-                <span className="text-slate-300 font-medium">Select Quotation Template & Add Products</span>
-              </div>
-              <div className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-900/60 border border-slate-800/80">
-                <span className="w-5 h-5 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center font-mono text-[10px] font-bold">2</span>
-                <span className="text-slate-300 font-medium">System applies automatic tax rules & discounts</span>
-              </div>
-              <div className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-900/60 border border-slate-800/80">
-                <span className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center font-mono text-[10px] font-bold">3</span>
-                <span className="text-white font-semibold">1-Click Convert $\to$ Auto-generates Subscription & Invoice</span>
-              </div>
+            <div className="pt-2 flex justify-center gap-3">
+              <button
+                onClick={() => onLaunch('admin')}
+                className="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-lg shadow-indigo-600/40 transition active:scale-95"
+              >
+                Open Admin Portal
+              </button>
+              <button
+                onClick={() => onLaunch('customer')}
+                className="px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs transition active:scale-95 border border-slate-700"
+              >
+                Customer Portal & LiveKit Voice
+              </button>
             </div>
-          </BentoCard>
-
-          {/* Card 5: Finance Lead Month-End Speed */}
-          <BentoCard className="md:col-span-6">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="p-1.5 rounded-lg bg-amber-600/20 text-amber-400">
-                <Layers className="w-4 h-4" />
-              </div>
-              <h3 className="text-base font-bold text-white">Sub-2-Second Finance Lead Reporting</h3>
-            </div>
-            <p className="text-xs text-slate-300 leading-relaxed mb-4">
-              The Odoo challenge highlighted that finance leads wait days for spreadsheet reports.
-              Brightloop provides instant sub-second aggregates for MRR, ARR, and overdue collections.
-            </p>
-
-            <div className="grid grid-cols-2 gap-3 pt-2">
-              <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 text-center">
-                <div className="text-xl font-bold font-mono text-emerald-400">&lt; 180ms</div>
-                <div className="text-[11px] text-slate-400 mt-0.5">Average Page Query Time</div>
-              </div>
-              <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 text-center">
-                <div className="text-xl font-bold font-mono text-indigo-400">0 Spreadsheets</div>
-                <div className="text-[11px] text-slate-400 mt-0.5">100% Unified Cloud Core</div>
-              </div>
-            </div>
-          </BentoCard>
+          </div>
         </div>
       </section>
     </div>

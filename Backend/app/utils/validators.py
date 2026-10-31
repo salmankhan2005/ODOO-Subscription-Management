@@ -1,6 +1,7 @@
 """
 app/utils/validators.py — Input validation helpers.
 """
+from __future__ import annotations
 
 import re
 from typing import Any

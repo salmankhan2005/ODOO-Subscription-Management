@@ -1,6 +1,7 @@
 """
 app/__init__.py — Application factory.
 """
+from __future__ import annotations
 
 from flask import Flask
 from flask_cors import CORS
@@ -54,6 +55,7 @@ def create_app():
     from app.routes.dashboard_routes import dashboard_bp
     from app.routes.report_routes import report_bp
     from app.routes.portal_routes import portal_bp
+    from app.routes.livekit_routes import livekit_bp
 
     api_prefix = '/api/v1'
 
@@ -74,6 +76,7 @@ def create_app():
     app.register_blueprint(portal_bp, url_prefix=f'{api_prefix}/portal')
     app.register_blueprint(qt_bp, url_prefix=f'{api_prefix}/quotation-templates')
     app.register_blueprint(variant_bp, url_prefix=f'{api_prefix}/variants')
+    app.register_blueprint(livekit_bp, url_prefix=f'{api_prefix}/livekit')
 
     # Health check
     @app.get('/api/v1/health')

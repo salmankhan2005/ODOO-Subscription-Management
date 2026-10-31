@@ -95,10 +95,14 @@ export const ProductManagement: React.FC = () => {
       {/* Product Cards with Interactive Variant Price Preview */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {products.map((prod) => {
+          const variants = prod.variants || [];
           const activeVarIdx = previewVariantIndex[prod.id] || 0;
-          const currentVariant = prod.variants[activeVarIdx] || prod.variants[0];
-          const dynamicEffectivePrice = prod.salesPrice + (currentVariant ? currentVariant.additionalPrice : 0);
-          const margin = Math.round(((dynamicEffectivePrice - prod.costPrice) / dynamicEffectivePrice) * 100);
+          const currentVariant = variants[activeVarIdx] || variants[0];
+          const dynamicEffectivePrice = (prod.salesPrice || 0) + (currentVariant ? currentVariant.additionalPrice : 0);
+          const costPrice = prod.costPrice || 0;
+          const margin = dynamicEffectivePrice > 0
+            ? Math.round(((dynamicEffectivePrice - costPrice) / dynamicEffectivePrice) * 100)
+            : 0;
 
           return (
             <BentoCard key={prod.id} glow className="flex flex-col justify-between">
@@ -107,7 +111,7 @@ export const ProductManagement: React.FC = () => {
                   <span className="text-[11px] font-mono uppercase tracking-wider text-indigo-400 font-semibold">
                     {prod.type}
                   </span>
-                  <span className="text-xs text-slate-400 font-mono">Cost: ${prod.costPrice}</span>
+                  <span className="text-xs text-slate-400 font-mono">Cost: ${costPrice}</span>
                 </div>
 
                 <h3 className="text-base font-bold text-white mt-3">{prod.name}</h3>
@@ -131,7 +135,7 @@ export const ProductManagement: React.FC = () => {
                 {/* Variants List & Interactive Selector */}
                 <div className="mt-4 space-y-2">
                   <div className="flex items-center justify-between text-xs text-slate-400">
-                    <span>Configured Variants ({prod.variants.length})</span>
+                    <span>Configured Variants ({variants.length})</span>
                     <button
                       onClick={() => setSelectedProductForVariant(prod)}
                       className="text-indigo-400 hover:text-indigo-300 font-medium text-[11px]"
@@ -141,7 +145,7 @@ export const ProductManagement: React.FC = () => {
                   </div>
 
                   <div className="space-y-1.5">
-                    {prod.variants.map((v, idx) => (
+                    {variants.map((v, idx) => (
                       <button
                         key={v.id}
                         onClick={() =>
@@ -196,7 +200,7 @@ export const ProductManagement: React.FC = () => {
               value={productForm.name}
               onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
               placeholder="e.g. Brightloop ERP Core"
-              className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+              className="w-full rounded-lg border border-slate-700 bg-slate-800 p-2.5 text-slate-100 outline-none focus:border-indigo-500"
             />
           </div>
 
@@ -206,7 +210,7 @@ export const ProductManagement: React.FC = () => {
               <select
                 value={productForm.type}
                 onChange={(e) => setProductForm({ ...productForm, type: e.target.value as any })}
-                className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+                className="w-full rounded-lg border border-slate-700 bg-slate-800 p-2.5 text-slate-100 outline-none focus:border-indigo-500"
               >
                 <option value="software">Software</option>
                 <option value="service">Service / SLA</option>
@@ -220,7 +224,7 @@ export const ProductManagement: React.FC = () => {
                 required
                 value={productForm.salesPrice}
                 onChange={(e) => setProductForm({ ...productForm, salesPrice: Number(e.target.value) })}
-                className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+                className="w-full rounded-lg border border-slate-700 bg-slate-800 p-2.5 text-slate-100 outline-none focus:border-indigo-500"
               />
             </div>
             <div>
@@ -230,7 +234,7 @@ export const ProductManagement: React.FC = () => {
                 required
                 value={productForm.costPrice}
                 onChange={(e) => setProductForm({ ...productForm, costPrice: Number(e.target.value) })}
-                className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+                className="w-full rounded-lg border border-slate-700 bg-slate-800 p-2.5 text-slate-100 outline-none focus:border-indigo-500"
               />
             </div>
           </div>
@@ -242,7 +246,7 @@ export const ProductManagement: React.FC = () => {
               value={productForm.description}
               onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
               placeholder="Product capabilities and subscription scope..."
-              className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+              className="w-full rounded-lg border border-slate-700 bg-slate-800 p-2.5 text-slate-100 outline-none focus:border-indigo-500"
             />
           </div>
 
@@ -253,7 +257,7 @@ export const ProductManagement: React.FC = () => {
               value={productForm.notes}
               onChange={(e) => setProductForm({ ...productForm, notes: e.target.value })}
               placeholder="e.g. Included in Odoo ecosystem tier"
-              className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+              className="w-full rounded-lg border border-slate-700 bg-slate-800 p-2.5 text-slate-100 outline-none focus:border-indigo-500"
             />
           </div>
 
@@ -292,7 +296,7 @@ export const ProductManagement: React.FC = () => {
                 value={variantForm.name}
                 onChange={(e) => setVariantForm({ ...variantForm, name: e.target.value })}
                 placeholder="e.g. Odoo Brand Edition"
-                className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+                className="w-full rounded-lg border border-slate-700 bg-slate-800 p-2.5 text-slate-100 outline-none focus:border-indigo-500"
               />
             </div>
 
@@ -305,7 +309,7 @@ export const ProductManagement: React.FC = () => {
                   value={variantForm.additionalPrice}
                   onChange={(e) => setVariantForm({ ...variantForm, additionalPrice: Number(e.target.value) })}
                   placeholder="560"
-                  className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg border border-slate-700 bg-slate-800 p-2.5 text-slate-100 outline-none focus:border-indigo-500"
                 />
               </div>
 
@@ -316,7 +320,7 @@ export const ProductManagement: React.FC = () => {
                   value={variantForm.sku}
                   onChange={(e) => setVariantForm({ ...variantForm, sku: e.target.value })}
                   placeholder="BMS-ODOO-560"
-                  className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg border border-slate-700 bg-slate-800 p-2.5 text-slate-100 outline-none focus:border-indigo-500"
                 />
               </div>
             </div>

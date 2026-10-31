@@ -1,6 +1,7 @@
 """
 app/services/discount_service.py
 """
+from __future__ import annotations
 
 import logging
 from datetime import date
@@ -9,13 +10,31 @@ from app.extensions import supabase_admin
 logger = logging.getLogger(__name__)
 
 
+def _normalize_discount(d: dict) -> dict:
+    if not d:
+        return d
+    d['type'] = d.get('discount_type', 'percentage')
+    d['minimumPurchase'] = float(d.get('minimum_purchase', 0))
+    d['minimumQuantity'] = int(d.get('minimum_quantity', 1))
+    d['applicableProductIds'] = d.get('applicable_product_ids', [])
+    d['applicableSubscriptions'] = bool(d.get('applicable_subscriptions', True))
+    d['startDate'] = d.get('start_date', '')
+    d['endDate'] = d.get('end_date') or ''
+    d['maxUsage'] = int(d.get('max_usage', 0))
+    d['usageCount'] = int(d.get('current_usage_count', 0))
+    return d
+
+
 def list_discounts(status: str = 'all'):
     try:
         query = supabase_admin.table('discount_rules').select('*')
         if status and status != 'all':
             query = query.eq('status', status)
         resp = query.order('created_at', desc=True).execute()
-        return resp.data, None
+        discounts = resp.data or []
+        for d in discounts:
+            _normalize_discount(d)
+        return discounts, None
     except Exception as e:
         return None, str(e)
 
@@ -23,44 +42,91 @@ def list_discounts(status: str = 'all'):
 def get_discount(discount_id: str):
     try:
         resp = supabase_admin.table('discount_rules').select('*').eq('id', discount_id).single().execute()
-        return resp.data, None
+        d = resp.data
+        if d:
+            _normalize_discount(d)
+        return d, None
     except Exception:
         return None, 'Discount not found'
 
 
 def create_discount(data: dict):
     try:
+        discount_type = data.get('discount_type') or data.get('type') or 'percentage'
+        min_purchase = data.get('minimum_purchase') if data.get('minimum_purchase') is not None else data.get('minimumPurchase', 0)
+        min_qty = data.get('minimum_quantity') if data.get('minimum_quantity') is not None else data.get('minimumQuantity', 1)
+        prods = data.get('applicable_product_ids') or data.get('applicableProductIds') or []
+        app_subs = data.get('applicable_subscriptions') if data.get('applicable_subscriptions') is not None else data.get('applicableSubscriptions', True)
+        start_date = data.get('start_date') or data.get('startDate') or date.today().isoformat()
+        end_date = data.get('end_date') or data.get('endDate')
+        max_usage = data.get('max_usage') if data.get('max_usage') is not None else data.get('maxUsage', 0)
+
         payload = {
             'name': data['name'],
-            'code': data.get('code', '').upper() or None,
-            'discount_type': data.get('discount_type', 'percentage'),
+            'code': (data.get('code', '') or '').upper() or None,
+            'discount_type': discount_type,
             'value': float(data['value']),
-            'minimum_purchase': float(data.get('minimum_purchase', 0)),
-            'minimum_quantity': int(data.get('minimum_quantity', 1)),
-            'applicable_product_ids': data.get('applicable_product_ids', []),
-            'applicable_subscriptions': bool(data.get('applicable_subscriptions', True)),
-            'start_date': data.get('start_date', date.today().isoformat()),
-            'end_date': data.get('end_date'),
-            'max_usage': int(data.get('max_usage', 0)),
+            'minimum_purchase': float(min_purchase),
+            'minimum_quantity': int(min_qty),
+            'applicable_product_ids': prods,
+            'applicable_subscriptions': bool(app_subs),
+            'start_date': start_date,
+            'end_date': end_date,
+            'max_usage': int(max_usage),
             'current_usage_count': 0,
             'status': 'active',
         }
         resp = supabase_admin.table('discount_rules').insert(payload).execute()
-        return resp.data[0] if resp.data else None, None
+        created = resp.data[0] if resp.data else None
+        if created:
+            _normalize_discount(created)
+        return created, None
     except Exception as e:
         return None, str(e)
 
 
 def update_discount(discount_id: str, data: dict):
     try:
-        allowed = [
-            'name', 'code', 'discount_type', 'value', 'minimum_purchase',
-            'minimum_quantity', 'applicable_product_ids', 'applicable_subscriptions',
-            'start_date', 'end_date', 'max_usage', 'status'
-        ]
-        payload = {k: v for k, v in data.items() if k in allowed}
+        key_map = {
+            'name': 'name',
+            'code': 'code',
+            'discount_type': 'discount_type',
+            'type': 'discount_type',
+            'value': 'value',
+            'minimum_purchase': 'minimum_purchase',
+            'minimumPurchase': 'minimum_purchase',
+            'minimum_quantity': 'minimum_quantity',
+            'minimumQuantity': 'minimum_quantity',
+            'applicable_product_ids': 'applicable_product_ids',
+            'applicableProductIds': 'applicable_product_ids',
+            'applicable_subscriptions': 'applicable_subscriptions',
+            'applicableSubscriptions': 'applicable_subscriptions',
+            'start_date': 'start_date',
+            'startDate': 'start_date',
+            'end_date': 'end_date',
+            'endDate': 'end_date',
+            'max_usage': 'max_usage',
+            'maxUsage': 'max_usage',
+            'status': 'status',
+        }
+        payload = {}
+        for k, v in data.items():
+            if k in key_map:
+                target_key = key_map[k]
+                if target_key in ('value', 'minimum_purchase'):
+                    payload[target_key] = float(v)
+                elif target_key in ('minimum_quantity', 'max_usage'):
+                    payload[target_key] = int(v)
+                elif target_key == 'code':
+                    payload[target_key] = (v or '').upper()
+                else:
+                    payload[target_key] = v
+
         resp = supabase_admin.table('discount_rules').update(payload).eq('id', discount_id).execute()
-        return resp.data[0] if resp.data else None, None
+        updated = resp.data[0] if resp.data else None
+        if updated:
+            _normalize_discount(updated)
+        return updated, None
     except Exception as e:
         return None, str(e)
 
@@ -77,7 +143,6 @@ def validate_discount(code: str, product_ids: list, amount: float, quantity: int
     """
     Validate a discount code and return the applicable discount amount.
     Returns (result_dict, error_string).
-    result_dict keys: discount_id, discount_name, discount_type, discount_value, discount_amount
     """
     today = date.today().isoformat()
     try:
@@ -134,9 +199,7 @@ def validate_discount(code: str, product_ids: list, amount: float, quantity: int
 def record_discount_usage(discount_id: str, subscription_id: str = None, invoice_id: str = None, amount: float = 0):
     """Atomically increment usage count and record usage history."""
     try:
-        # Atomic increment via RPC (defined in DB schema)
         supabase_admin.rpc('increment_discount_usage', {'p_discount_id': discount_id}).execute()
-        # Record history
         supabase_admin.table('discount_usages').insert({
             'discount_id': discount_id,
             'subscription_id': subscription_id,

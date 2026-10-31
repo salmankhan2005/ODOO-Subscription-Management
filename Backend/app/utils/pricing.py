@@ -4,6 +4,7 @@ app/utils/pricing.py — Decimal-safe pricing calculations.
 All monetary arithmetic uses Python's `Decimal` to prevent floating-point
 rounding errors on financial totals.
 """
+from __future__ import annotations
 
 from decimal import Decimal, ROUND_HALF_UP
 

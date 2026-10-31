@@ -4,6 +4,7 @@ app/services/report_service.py
 Reporting queries using database-side aggregation.
 All queries support date_from / date_to filters and pagination.
 """
+from __future__ import annotations
 
 import logging
 from app.extensions import supabase_admin

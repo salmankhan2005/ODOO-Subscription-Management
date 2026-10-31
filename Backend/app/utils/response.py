@@ -1,6 +1,7 @@
 """
 app/utils/response.py — Standardised JSON response helpers.
 """
+from __future__ import annotations
 
 from flask import jsonify
 from typing import Any

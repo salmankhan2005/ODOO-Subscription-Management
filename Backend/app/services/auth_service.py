@@ -3,6 +3,7 @@ app/services/auth_service.py
 
 Handles all authentication operations via Supabase Auth.
 """
+from __future__ import annotations
 
 import logging
 from app.extensions import create_supabase_anon_client, supabase_admin

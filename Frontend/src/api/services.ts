@@ -19,3 +19,5 @@ export { billingApi } from './billingApi';
 export { reportApi } from './reportApi';
 export { portalApi } from './portalApi';
 export { dashboardApi } from './dashboardApi';
+export { livekitApi } from './livekitApi';
+export type { LiveKitTokenResponse } from './livekitApi';

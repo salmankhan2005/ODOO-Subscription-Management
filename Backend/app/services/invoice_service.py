@@ -7,6 +7,7 @@ CRITICAL RULES:
 - Never mark an invoice as paid just because it was generated.
 - All totals are calculated server-side; never trust frontend totals.
 """
+from __future__ import annotations
 
 import logging
 from datetime import date, timedelta

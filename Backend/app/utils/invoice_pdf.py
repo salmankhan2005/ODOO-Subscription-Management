@@ -3,6 +3,7 @@ app/utils/invoice_pdf.py — Generate PDF invoices using ReportLab.
 
 Returns PDF bytes that can be streamed to the client.
 """
+from __future__ import annotations
 
 import io
 from datetime import date

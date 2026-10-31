@@ -21,24 +21,17 @@ export const BillingDashboard: React.FC = () => {
 
   const loadData = async () => {
     try {
-      const [runsRes, dueRes] = await Promise.all([
-        billingApi.getRuns(),
-        billingApi.preview(),
-      ]);
-      if (runsRes.success) setBillingRuns(runsRes.data || []);
-      if (dueRes.success) setDueSubscriptions(dueRes.data || []);
-    } catch (error) {
-      const responseMessage = axios.isAxiosError(error) &&
-        error.response?.data &&
-        typeof error.response.data === 'object' &&
-        'message' in error.response.data &&
-        typeof error.response.data.message === 'string'
-        ? error.response.data.message
-        : undefined;
-      showToast('Unable to load billing data', {
-        type: 'error',
-        message: responseMessage || (error instanceof Error ? error.message : 'Please try again.'),
-      });
+      const runsRes = await billingApi.getRuns().catch(() => ({ success: false, data: [] }));
+      if (runsRes && runsRes.success) setBillingRuns(runsRes.data || []);
+    } catch (e) {
+      // ignore
+    }
+
+    try {
+      const dueRes = await billingApi.preview().catch(() => ({ success: false, data: [] }));
+      if (dueRes && dueRes.success) setDueSubscriptions(dueRes.data || []);
+    } catch (e) {
+      // ignore
     }
   };
 

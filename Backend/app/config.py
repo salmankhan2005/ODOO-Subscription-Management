@@ -1,11 +1,16 @@
 """
 app/config.py — Centralised configuration loaded from environment variables.
 """
+from __future__ import annotations
 
 import os
-from dotenv import load_dotenv
-
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    def load_dotenv(*_args, **_kwargs):
+        pass
+    load_dotenv()
 
 
 class Config:
@@ -32,6 +37,12 @@ class Config:
     APP_NAME: str = os.environ.get('APP_NAME', 'Brightloop SMS')
     FRONTEND_URL: str = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
 
+    # LiveKit Voice Support Agent
+    LIVEKIT_URL: str = os.environ.get('LIVEKIT_URL', 'wss://oddoo-hackathon-ulmfmcmg.livekit.cloud')
+    LIVEKIT_API_KEY: str = os.environ.get('LIVEKIT_API_KEY', 'APInfGW9ufHjmk9')
+    LIVEKIT_API_SECRET: str = os.environ.get('LIVEKIT_API_SECRET', 'FLHvKbawzyAW5pLRvkwDngbzzzc3Q2cvPRLvfKdpx3f')
+    DEEPGRAM_API_KEY: str = os.environ.get('DEEPGRAM_API_KEY', '')
+
     # Rate limiting
     RATELIMIT_DEFAULT: str = '200 per minute'
     RATELIMIT_AUTH: str = '10 per minute'
@@ -48,7 +59,7 @@ class ProductionConfig(Config):
 config_map = {
     'development': DevelopmentConfig,
     'production': ProductionConfig,
-    'default': DevelopmentConfig,
+    'testing': DevelopmentConfig,
 }
 
 

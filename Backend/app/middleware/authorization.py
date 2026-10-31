@@ -4,6 +4,7 @@ app/middleware/authorization.py
 Role-based access-control decorators.
 These are layered on top of @require_auth.
 """
+from __future__ import annotations
 
 import functools
 from flask import g

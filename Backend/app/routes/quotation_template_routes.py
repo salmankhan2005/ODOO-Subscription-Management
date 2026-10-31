@@ -3,6 +3,7 @@ app/routes/quotation_template_routes.py — Quotation template CRUD.
 This blueprint is not registered separately; it is handled through quotation_routes.
 Stub included for completeness.
 """
+from __future__ import annotations
 
 from flask import Blueprint, request
 from app.middleware.authentication import require_auth

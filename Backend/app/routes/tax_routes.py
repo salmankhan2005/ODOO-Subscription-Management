@@ -1,6 +1,7 @@
 """
 app/routes/tax_routes.py
 """
+from __future__ import annotations
 
 from flask import Blueprint, request
 from app.middleware.authentication import require_auth

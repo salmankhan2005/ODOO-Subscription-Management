@@ -4,6 +4,7 @@ app/services/payment_service.py
 Manual payment recording with invoice reconciliation.
 Supports partial payments and multiple payments per invoice.
 """
+from __future__ import annotations
 
 import logging
 from datetime import date
@@ -15,7 +16,6 @@ logger = logging.getLogger(__name__)
 
 VALID_METHODS = {'Cash', 'Bank Transfer', 'UPI', 'Card', 'Cheque', 'Other'}
 VALID_STATUSES = {'pending', 'completed', 'failed', 'refunded'}
-PAYMENT_SELECT = '*, customers(name, email), payment_allocations(invoice_id, invoices(invoice_number))'
 
 
 def _generate_payment_ref() -> str:
@@ -27,20 +27,107 @@ def _generate_payment_ref() -> str:
 
 def list_payments(customer_id: str = None, page: int = 1, per_page: int = 20):
     try:
-        query = supabase_admin.table('payments').select(PAYMENT_SELECT, count='exact')
-        if customer_id:
-            query = query.eq('customer_id', customer_id)
-        query = query.order('created_at', desc=True)
-        offset = (page - 1) * per_page
-        resp = query.range(offset, offset + per_page - 1).execute()
-        return resp.data, build_pagination_meta(page, per_page, resp.count or 0), None
+        try:
+            query = supabase_admin.table('payments').select(
+                '*, customers(name, email), payment_allocations(invoice_id, allocated_amount, invoices(id, invoice_number))', count='exact'
+            )
+            if customer_id:
+                query = query.eq('customer_id', customer_id)
+            query = query.order('created_at', desc=True)
+            offset = (page - 1) * per_page
+            resp = query.range(offset, offset + per_page - 1).execute()
+        except Exception as query_err:
+            logger.warning('Falling back from nested payment_allocations query: %s', query_err)
+            query = supabase_admin.table('payments').select(
+                '*, customers(name, email)', count='exact'
+            )
+            if customer_id:
+                query = query.eq('customer_id', customer_id)
+            query = query.order('created_at', desc=True)
+            offset = (page - 1) * per_page
+            resp = query.range(offset, offset + per_page - 1).execute()
+
+        raw_data = resp.data or []
+        missing_customer_ids: list = []
+        missing_payment_ids: list = []
+
+        for p in raw_data:
+            # Flatten nested customer join
+            customer = p.get('customers') or {}
+            if isinstance(customer, dict) and customer.get('name'):
+                p['customer_name'] = customer.get('name', '')
+                p['customer_email'] = customer.get('email', '')
+            else:
+                p.setdefault('customer_name', '')
+                p.setdefault('customer_email', '')
+                if p.get('customer_id') and not p.get('customer_name'):
+                    missing_customer_ids.append(p['customer_id'])
+
+            # Flatten nested payment_allocations + invoices join
+            allocs = p.get('payment_allocations') or []
+            if allocs and isinstance(allocs, list):
+                first_alloc = allocs[0] or {}
+                p['invoice_id'] = p.get('invoice_id') or first_alloc.get('invoice_id', '')
+                inv = first_alloc.get('invoices') or {}
+                if isinstance(inv, dict) and inv.get('invoice_number'):
+                    p['invoice_number'] = inv.get('invoice_number', '')
+                else:
+                    p.setdefault('invoice_number', '')
+                    if p.get('id') and not p.get('invoice_number'):
+                        missing_payment_ids.append(p['id'])
+            else:
+                p.setdefault('invoice_id', '')
+                p.setdefault('invoice_number', '')
+                if p.get('id'):
+                    missing_payment_ids.append(p['id'])
+
+        # Fallback: bulk-resolve customer names that the join missed
+        if missing_customer_ids:
+            try:
+                cust_resp = supabase_admin.table('customers').select('id, name, email').in_(
+                    'id', list(set(missing_customer_ids))
+                ).execute()
+                cust_map = {c['id']: c for c in (cust_resp.data or [])}
+                for p in raw_data:
+                    if not p.get('customer_name') and p.get('customer_id') in cust_map:
+                        c = cust_map[p['customer_id']]
+                        p['customer_name'] = c.get('name', '')
+                        p['customer_email'] = c.get('email', '')
+            except Exception as cust_err:
+                logger.warning('Customer fallback lookup failed: %s', cust_err)
+
+        # Fallback: bulk-resolve invoice numbers that the join missed
+        if missing_payment_ids:
+            try:
+                alloc_resp = supabase_admin.table('payment_allocations').select(
+                    'payment_id, invoice_id, invoices(id, invoice_number)'
+                ).in_('payment_id', list(set(missing_payment_ids))).execute()
+                alloc_map: dict = {}
+                for alloc in (alloc_resp.data or []):
+                    pid = alloc.get('payment_id')
+                    if pid and pid not in alloc_map:
+                        inv = alloc.get('invoices') or {}
+                        alloc_map[pid] = {
+                            'invoice_id': alloc.get('invoice_id', ''),
+                            'invoice_number': inv.get('invoice_number', '') if isinstance(inv, dict) else '',
+                        }
+                for p in raw_data:
+                    pid = p.get('id')
+                    if pid in alloc_map and not p.get('invoice_number'):
+                        p['invoice_id'] = alloc_map[pid]['invoice_id']
+                        p['invoice_number'] = alloc_map[pid]['invoice_number']
+            except Exception as alloc_err:
+                logger.warning('Allocation fallback lookup failed: %s', alloc_err)
+
+        return raw_data, build_pagination_meta(page, per_page, resp.count or 0), None
     except Exception as e:
+        logger.exception('list_payments failed: %s', e)
         return None, None, str(e)
 
 
 def get_payment(payment_id: str):
     try:
-        resp = supabase_admin.table('payments').select(PAYMENT_SELECT).eq('id', payment_id).single().execute()
+        resp = supabase_admin.table('payments').select('*').eq('id', payment_id).single().execute()
         return resp.data, None
     except Exception:
         return None, 'Payment not found'
