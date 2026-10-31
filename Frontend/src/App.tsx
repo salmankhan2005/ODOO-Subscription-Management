@@ -6,12 +6,21 @@ import { LoginPage } from './components/auth/LoginPage';
 import { ShowcaseLanding } from './components/landing/ShowcaseLanding';
 import { UserRole } from './types';
 
+const SELECTED_PORTAL_KEY = 'brightloop_selected_portal';
+const getSavedPortal = (): UserRole | null => {
+  const saved = sessionStorage.getItem(SELECTED_PORTAL_KEY);
+  return saved === 'admin' || saved === 'staff' || saved === 'customer'
+    ? saved
+    : null;
+};
+
 const AppContent: React.FC = () => {
   const { isAuthenticated, isLoading, role, accounts, switchAccount } = useAuth();
-  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
+  const [selectedRole, setSelectedRole] = useState<UserRole | null>(getSavedPortal);
 
   const handleLaunch = async (requestedRole: UserRole) => {
     setSelectedRole(requestedRole);
+    sessionStorage.setItem(SELECTED_PORTAL_KEY, requestedRole);
     const savedAccount = accounts.find((account) => account.role === requestedRole);
     if (savedAccount) {
       const result = await switchAccount(savedAccount.id);
@@ -22,7 +31,7 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0B0F17] text-slate-100">
+    <div className="min-h-screen bg-[#F7FAFA] text-[#252B2E]">
       {isLoading ? (
         <div className="flex min-h-screen items-center justify-center text-sm text-slate-400">
           Checking your session...
@@ -32,7 +41,10 @@ const AppContent: React.FC = () => {
       ) : selectedRole ? (
         <LoginPage
           expectedRole={selectedRole}
-          onCancel={() => setSelectedRole(null)}
+          onCancel={() => {
+            sessionStorage.removeItem(SELECTED_PORTAL_KEY);
+            setSelectedRole(null);
+          }}
         />
       ) : (
         <ShowcaseLanding onLaunch={(requestedRole) => void handleLaunch(requestedRole)} />

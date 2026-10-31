@@ -89,7 +89,7 @@ def generate_invoice_pdf(invoice: dict, customer: dict, company_name: str = 'Bri
     # ── Line Items ─────────────────────────────────────────────────────────────
     col_headers = ['#', 'Description', 'Qty', 'Unit Price', 'Tax %', 'Discount', 'Total']
     line_rows = [col_headers]
-    lines = invoice.get('lines', [])
+    lines = invoice.get('lines', invoice.get('invoice_lines', []))
     for i, line in enumerate(lines, 1):
         line_rows.append([
             str(i),

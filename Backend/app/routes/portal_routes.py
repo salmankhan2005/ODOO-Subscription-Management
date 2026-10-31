@@ -5,9 +5,11 @@ Customer self-service portal API.
 All endpoints enforce that customers can only access their own data (IDOR protection).
 """
 
+from datetime import date
 from flask import Blueprint, request, g
 from app.middleware.authentication import require_auth
 from app.middleware.authorization import customer_only
+from app.services.portal_purchase_service import purchase_plan
 from app.utils.response import success_response, error_response
 from app.utils.permissions import customer_can_access
 from app.extensions import supabase_admin
@@ -57,8 +59,33 @@ def portal_products():
 @require_auth
 @customer_only
 def portal_plans():
-    resp = supabase_admin.table('subscription_plans').select('*').eq('status', 'active').execute()
-    return success_response(resp.data)
+    today = date.today().isoformat()
+    resp = (
+        supabase_admin.table('subscription_plans')
+        .select('*')
+        .eq('status', 'active')
+        .lte('start_date', today)
+        .execute()
+    )
+    plans = [
+        plan for plan in (resp.data or [])
+        if not plan.get('end_date') or plan['end_date'] >= today
+    ]
+    return success_response(plans)
+
+
+@portal_bp.post('/plans/<plan_id>/purchase')
+@require_auth
+@customer_only
+def purchase_customer_plan(plan_id):
+    customer_id = _customer_id()
+    if not customer_id:
+        return error_response('No customer profile linked to this account', 404, 'NOT_FOUND')
+    data = request.get_json(force=True, silent=True) or {}
+    result, err = purchase_plan(customer_id, g.user['id'], plan_id, data)
+    if err:
+        return error_response(err, 422, 'PURCHASE_ERROR')
+    return success_response(result, 'Plan purchased and subscription activated', 201)
 
 
 @portal_bp.get('/subscriptions')

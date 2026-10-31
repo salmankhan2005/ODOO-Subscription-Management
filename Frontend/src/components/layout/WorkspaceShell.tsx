@@ -16,9 +16,12 @@ import { ReportsAnalytics } from '../admin/ReportsAnalytics';
 import { CustomerPortal } from '../customer/CustomerPortal';
 import { StaffManagement } from '../admin/StaffManagement';
 import { invoiceApi } from '../../api/services';
+import axios from 'axios';
+import { useToast } from '../../context/ToastContext';
 
 export const WorkspaceShell: React.FC = () => {
   const { role } = useAuth();
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<string>(
     role === 'customer' ? 'customer_overview' : 'overview'
   );
@@ -41,13 +44,27 @@ export const WorkspaceShell: React.FC = () => {
     }
 
     const checkOverdue = async () => {
-      const res = await invoiceApi.getAll({ status: 'overdue' });
-      if (res.success) {
-        setOverdueCount(res.data.length);
+      try {
+        const res = await invoiceApi.getAll({ status: 'overdue' });
+        if (res.success) {
+          setOverdueCount(res.data.length);
+        }
+      } catch (error) {
+        const responseMessage = axios.isAxiosError(error) &&
+          error.response?.data &&
+          typeof error.response.data === 'object' &&
+          'message' in error.response.data &&
+          typeof error.response.data.message === 'string'
+          ? error.response.data.message
+          : undefined;
+        showToast('Could not load overdue invoices', {
+          type: 'error',
+          message: responseMessage || (error instanceof Error ? error.message : 'Please try again.'),
+        });
       }
     };
-    checkOverdue();
-  }, [activeTab, role]);
+    void checkOverdue();
+  }, [role, showToast]);
 
   const viewTitles: Record<string, string> = {
     overview: 'Overview',
@@ -71,7 +88,7 @@ export const WorkspaceShell: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-[#0B0F17] text-slate-100 overflow-hidden">
+    <div className="flex h-screen bg-[#F7FAFA] text-[#252B2E] overflow-hidden">
       {/* Sidebar */}
       <Sidebar
         activeTab={activeTab}
@@ -85,14 +102,16 @@ export const WorkspaceShell: React.FC = () => {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <TopNav activeView={viewTitles[activeTab] || 'Workspace'} />
 
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-[#0B0F17]">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-[#F7FAFA]">
           <div className="max-w-7xl mx-auto pb-16">
             {activeTab === 'overview' && role !== 'customer' && <OverviewDashboard onNavigate={setActiveTab} />}
             {activeTab === 'customers' && role !== 'customer' && <CustomerManagement />}
             {activeTab === 'products' && role === 'admin' && <ProductManagement />}
-            {activeTab === 'plans' && role === 'admin' && <PlanManagement />}
+            {activeTab === 'plans' && role !== 'customer' && <PlanManagement />}
             {activeTab === 'quotations' && role !== 'customer' && <QuotationManagement />}
-            {activeTab === 'subscriptions' && role !== 'customer' && <SubscriptionManagement />}
+            {activeTab === 'subscriptions' && role !== 'customer' && (
+              <SubscriptionManagement onNavigate={setActiveTab} />
+            )}
             {activeTab === 'invoices' && role !== 'customer' && <InvoiceManagement />}
             {activeTab === 'payments' && role !== 'customer' && <PaymentManagement />}
             {activeTab === 'billing' && role === 'admin' && <BillingDashboard />}

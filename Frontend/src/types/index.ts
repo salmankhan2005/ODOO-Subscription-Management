@@ -126,6 +126,7 @@ export interface Subscription {
   totalAmount: number;
   autoRenew: boolean;
   pauseReason?: string;
+  notes?: string;
   createdAt: string;
 }
 
@@ -206,7 +207,7 @@ export interface BillingRun {
   totalProcessed: number;
   successful: number;
   failed: number;
-  status: 'in_progress' | 'completed' | 'failed';
+  status: 'in_progress' | 'completed' | 'failed' | 'partially_failed';
   generatedInvoiceIds: string[];
   totalBilledAmount: number;
 }

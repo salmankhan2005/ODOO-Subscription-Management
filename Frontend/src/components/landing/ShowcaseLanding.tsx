@@ -51,7 +51,7 @@ export const ShowcaseLanding: React.FC<ShowcaseLandingProps> = ({ onLaunch }) =>
   };
 
   return (
-    <div className="min-h-screen bg-[#0B0F17] text-slate-100 pb-24">
+    <div className="min-h-screen bg-[#F7FAFA] text-slate-100 pb-24">
       {/* Hero Section */}
       <section className="relative pt-12 md:pt-20 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden">
         {/* Ambient atmospheric glows */}
@@ -395,7 +395,7 @@ export const ShowcaseLanding: React.FC<ShowcaseLandingProps> = ({ onLaunch }) =>
               </div>
 
               {/* Live Preview Summary Card */}
-              <div className="lg:col-span-5 p-5 rounded-2xl bg-gradient-to-b from-[#161F30] to-[#0E1524] border border-slate-700/80 shadow-xl space-y-4">
+              <div className="lg:col-span-5 p-5 rounded-2xl bg-gradient-to-b from-[#FFFFFF] to-[#FFFFFF] border border-slate-700/80 shadow-xl space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                   <span className="text-xs font-bold text-slate-200 uppercase tracking-wider">
                     Live Calculation Breakdown

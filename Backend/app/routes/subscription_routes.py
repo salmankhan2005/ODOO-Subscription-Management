@@ -55,11 +55,27 @@ def get_subscription(subscription_id):
 @admin_or_staff
 def update_subscription(subscription_id):
     data = request.get_json(force=True, silent=True) or {}
-    from app.extensions import supabase_admin
-    allowed = ['payment_terms', 'auto_renew', 'notes', 'currency']
-    payload = {k: v for k, v in data.items() if k in allowed}
-    resp = supabase_admin.table('subscriptions').update(payload).eq('id', subscription_id).execute()
-    return success_response(resp.data[0] if resp.data else None, 'Subscription updated')
+    result, err = subscription_service.update_subscription(subscription_id, data)
+    if err:
+        return error_response(err, 400, 'UPDATE_ERROR')
+    return success_response(result, 'Subscription updated')
+
+
+@subscription_bp.delete('/<subscription_id>')
+@require_auth
+@admin_or_staff
+def delete_subscription(subscription_id):
+    result, err = subscription_service.delete_subscription(
+        subscription_id, g.user['id']
+    )
+    if err:
+        return error_response(err, 422, 'DELETE_ERROR')
+    message = (
+        'Draft subscription deleted'
+        if result.get('deleted')
+        else f'Subscription is now {result.get("status", "closed")}; billing history retained'
+    )
+    return success_response(result, message)
 
 
 def _transition(subscription_id, target):

@@ -32,7 +32,9 @@ export const InvoiceManagement: React.FC = () => {
   const { showToast } = useToast();
 
   const loadInvoices = async () => {
-    const res = await invoiceApi.getAll(statusFilter);
+    const res = await invoiceApi.getAll(
+      statusFilter === 'all' ? undefined : { status: statusFilter }
+    );
     if (res.success) {
       let data = res.data;
       if (search.trim()) {
@@ -53,7 +55,7 @@ export const InvoiceManagement: React.FC = () => {
   }, [statusFilter, search]);
 
   const handleSendInvoice = async (inv: Invoice) => {
-    const res = await invoiceApi.sendInvoice(inv.id);
+    const res = await invoiceApi.send(inv.id);
     if (res.success) {
       showToast(`Invoice ${inv.invoiceNumber} emailed to ${inv.customerEmail}`);
       loadInvoices();
@@ -83,10 +85,10 @@ export const InvoiceManagement: React.FC = () => {
     }
 
     const res = await paymentApi.record({
-      invoiceId: paymentModalInvoice.id,
-      method: payMethod,
+      invoice_id: paymentModalInvoice.id,
+      payment_method: payMethod,
       amount: payAmount,
-      transactionReference: payRef,
+      transaction_reference: payRef,
       notes: 'Captured via Brightloop payment terminal'
     });
 
@@ -122,7 +124,7 @@ export const InvoiceManagement: React.FC = () => {
             placeholder="Search invoice number, customer..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-[#111827] border border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+            className="w-full bg-[#FFFFFF] border border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
           />
         </div>
 
@@ -264,7 +266,7 @@ export const InvoiceManagement: React.FC = () => {
             </div>
 
             {/* Printable Invoice Sheet */}
-            <div className="p-6 rounded-2xl bg-[#0B0F17] border border-slate-800 space-y-6">
+            <div className="p-6 rounded-2xl bg-[#F7FAFA] border border-slate-800 space-y-6">
               {/* Top Banner */}
               <div className="flex justify-between items-start">
                 <div className="space-y-1">
@@ -396,7 +398,7 @@ export const InvoiceManagement: React.FC = () => {
               <select
                 value={payMethod}
                 onChange={(e) => setPayMethod(e.target.value as any)}
-                className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+                className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
               >
                 <option value="Card">Credit / Debit Card</option>
                 <option value="Bank Transfer">ACH / Bank Wire Transfer</option>
@@ -416,7 +418,7 @@ export const InvoiceManagement: React.FC = () => {
                 max={paymentModalInvoice.outstandingBalance}
                 value={payAmount}
                 onChange={(e) => setPayAmount(Number(e.target.value))}
-                className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 font-mono focus:outline-none focus:border-indigo-500"
+                className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 font-mono focus:outline-none focus:border-indigo-500"
               />
               <span className="text-[11px] text-slate-500 mt-1 block">
                 Supports partial payments up to ${paymentModalInvoice.outstandingBalance}
@@ -430,7 +432,7 @@ export const InvoiceManagement: React.FC = () => {
                 required
                 value={payRef}
                 onChange={(e) => setPayRef(e.target.value)}
-                className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 font-mono focus:outline-none focus:border-indigo-500"
+                className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 font-mono focus:outline-none focus:border-indigo-500"
               />
             </div>
 

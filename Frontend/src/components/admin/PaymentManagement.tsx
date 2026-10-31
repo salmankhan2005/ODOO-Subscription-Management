@@ -70,10 +70,10 @@ export const PaymentManagement: React.FC = () => {
     }
 
     const res = await paymentApi.record({
-      invoiceId: selectedInvoiceId,
-      method,
+      invoice_id: selectedInvoiceId,
+      payment_method: method,
       amount,
-      transactionReference: txnRef || `TXN-${Math.floor(100000 + Math.random() * 900000)}`,
+      transaction_reference: txnRef || `TXN-${Math.floor(100000 + Math.random() * 900000)}`,
       notes
     });
 
@@ -116,7 +116,7 @@ export const PaymentManagement: React.FC = () => {
             placeholder="Search reference, customer, or invoice..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-[#111827] border border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+            className="w-full bg-[#FFFFFF] border border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
           />
         </div>
       </div>
@@ -190,7 +190,7 @@ export const PaymentManagement: React.FC = () => {
                 <select
                   value={selectedInvoiceId}
                   onChange={(e) => handleInvoiceSelect(e.target.value)}
-                  className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
                 >
                   {unpaidInvoices.map((inv) => (
                     <option key={inv.id} value={inv.id}>
@@ -219,7 +219,7 @@ export const PaymentManagement: React.FC = () => {
                   <select
                     value={method}
                     onChange={(e) => setMethod(e.target.value as any)}
-                    className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
                   >
                     <option value="Card">Card</option>
                     <option value="Bank Transfer">Bank Transfer / Wire</option>
@@ -239,7 +239,7 @@ export const PaymentManagement: React.FC = () => {
                     max={selectedInvoice?.outstandingBalance}
                     value={amount}
                     onChange={(e) => setAmount(Number(e.target.value))}
-                    className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 font-mono focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 font-mono focus:outline-none focus:border-indigo-500"
                   />
                 </div>
               </div>
@@ -251,7 +251,7 @@ export const PaymentManagement: React.FC = () => {
                   required
                   value={txnRef}
                   onChange={(e) => setTxnRef(e.target.value)}
-                  className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 font-mono focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 font-mono focus:outline-none focus:border-indigo-500"
                 />
               </div>
 
@@ -262,7 +262,7 @@ export const PaymentManagement: React.FC = () => {
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="e.g. Cleared via Silicon Valley Bank ACH"
-                  className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
                 />
               </div>
 

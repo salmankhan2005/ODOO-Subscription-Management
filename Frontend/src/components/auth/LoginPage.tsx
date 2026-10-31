@@ -50,7 +50,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   };
 
   return (
-    <main className={`relative flex min-h-screen items-center justify-center overflow-y-auto bg-[#0B0F17] px-4 py-12 text-slate-100 ${onCancel ? 'fixed inset-0 z-[60]' : ''}`}>
+    <main className={`relative flex min-h-screen items-center justify-center overflow-y-auto bg-[#F7FAFA] px-4 py-12 text-slate-100 ${onCancel ? 'fixed inset-0 z-[60]' : ''}`}>
       {onCancel && (
         <button
           type="button"
@@ -84,7 +84,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           </p>
         </div>
 
-        <section className="rounded-2xl border border-slate-700/80 bg-[#111827]/95 p-6 shadow-2xl sm:p-8">
+        <section className="rounded-2xl border border-slate-700/80 bg-[#FFFFFF]/95 p-6 shadow-2xl sm:p-8">
           <div className="mb-6 flex items-center gap-3 rounded-xl border border-slate-700/80 bg-slate-900/60 p-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-800">
               {mode === 'register' ? (

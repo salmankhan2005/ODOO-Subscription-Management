@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 import { reportApi, subscriptionApi, invoiceApi, customerApi, dashboardApi } from '../../api/services';
 import { useAuth } from '../../context/AuthContext';
 import { BentoCard } from '../common/BentoCard';
 import { StatusBadge } from '../common/StatusBadge';
+import { useToast } from '../../context/ToastContext';
 import {
   TrendingUp,
   CreditCard,
@@ -23,6 +25,7 @@ interface OverviewDashboardProps {
 
 export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({ onNavigate }) => {
   const { role } = useAuth();
+  const { showToast } = useToast();
   const [metrics, setMetrics] = useState({
     mrr: 0,
     arr: 0,
@@ -41,58 +44,72 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({ onNavigate
 
   useEffect(() => {
     const loadData = async () => {
-      if (role === 'admin') {
-        const summaryRes = await reportApi.getFinancialSummary();
-        if (summaryRes.success && summaryRes.data) {
+      try {
+        if (role === 'admin') {
+          const summaryRes = await reportApi.getFinancialSummary();
+          if (summaryRes.success && summaryRes.data) {
+            setMetrics((current) => ({
+              ...current,
+              mrr: summaryRes.data.mrr,
+              arr: summaryRes.data.arr,
+              totalCollected: summaryRes.data.total_collected,
+              totalOutstanding: summaryRes.data.total_outstanding,
+            }));
+          }
+        } else {
+          const summaryRes = await dashboardApi.getStaffDashboard();
+          if (summaryRes.success && summaryRes.data) {
+            setMetrics((current) => ({
+              ...current,
+              activeSubscriptionsCount: summaryRes.data.active_subscriptions,
+              totalCustomersCount: summaryRes.data.total_customers,
+              overdueCount: summaryRes.data.overdue_invoices,
+              upcomingRenewalsCount: summaryRes.data.upcoming_renewals,
+            }));
+          }
+        }
+        const subsRes = await subscriptionApi.getAll();
+        if (subsRes.success) {
+          setRecentSubscriptions(subsRes.data.slice(0, 5));
           setMetrics((current) => ({
             ...current,
-            mrr: summaryRes.data.mrr,
-            arr: summaryRes.data.arr,
-            totalCollected: summaryRes.data.total_collected,
-            totalOutstanding: summaryRes.data.total_outstanding,
+            activeSubscriptionsCount: subsRes.data.filter((subscription) => subscription.status === 'active').length,
           }));
         }
-      } else {
-        const summaryRes = await dashboardApi.getStaffDashboard();
-        if (summaryRes.success && summaryRes.data) {
+
+        const invsRes = await invoiceApi.getAll();
+        if (invsRes.success) {
+          setRecentInvoices(invsRes.data.slice(0, 5));
+          const overdueInvoices = invsRes.data.filter((invoice) => invoice.status === 'overdue');
           setMetrics((current) => ({
             ...current,
-            activeSubscriptionsCount: summaryRes.data.active_subscriptions,
-            totalCustomersCount: summaryRes.data.total_customers,
-            overdueCount: summaryRes.data.overdue_invoices,
-            upcomingRenewalsCount: summaryRes.data.upcoming_renewals,
+            overdueCount: overdueInvoices.length,
+            overdueAmount: overdueInvoices.reduce((total, invoice) => total + invoice.outstandingBalance, 0),
           }));
         }
-      }
-      const subsRes = await subscriptionApi.getAll();
-      if (subsRes.success) {
-        setRecentSubscriptions(subsRes.data.slice(0, 5));
-        setMetrics((current) => ({
-          ...current,
-          activeSubscriptionsCount: subsRes.data.filter((subscription) => subscription.status === 'active').length,
-        }));
-      }
 
-      const invsRes = await invoiceApi.getAll();
-      if (invsRes.success) {
-        setRecentInvoices(invsRes.data.slice(0, 5));
-        const overdueInvoices = invsRes.data.filter((invoice) => invoice.status === 'overdue');
-        setMetrics((current) => ({
-          ...current,
-          overdueCount: overdueInvoices.length,
-          overdueAmount: overdueInvoices.reduce((total, invoice) => total + invoice.outstandingBalance, 0),
-        }));
-      }
-
-      const custRes = await customerApi.getAll();
-      if (custRes.success) {
-        setCustomers(custRes.data);
-        setMetrics((current) => ({ ...current, totalCustomersCount: custRes.data.length }));
+        const custRes = await customerApi.getAll();
+        if (custRes.success) {
+          setCustomers(custRes.data);
+          setMetrics((current) => ({ ...current, totalCustomersCount: custRes.data.length }));
+        }
+      } catch (error) {
+        const responseMessage = axios.isAxiosError(error) &&
+          error.response?.data &&
+          typeof error.response.data === 'object' &&
+          'message' in error.response.data &&
+          typeof error.response.data.message === 'string'
+          ? error.response.data.message
+          : undefined;
+        showToast('Dashboard data could not be loaded', {
+          type: 'error',
+          message: responseMessage || (error instanceof Error ? error.message : 'Please try again.'),
+        });
       }
     };
 
-    loadData();
-  }, [role]);
+    void loadData();
+  }, [role, showToast]);
 
   return (
     <div className="space-y-6">

@@ -280,7 +280,7 @@ export const DiscountAndTaxManagement: React.FC = () => {
               value={discForm.name}
               onChange={(e) => setDiscForm({ ...discForm, name: e.target.value })}
               placeholder="e.g. Enterprise Volume Incentive"
-              className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+              className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
             />
           </div>
 
@@ -293,7 +293,7 @@ export const DiscountAndTaxManagement: React.FC = () => {
                 value={discForm.code}
                 onChange={(e) => setDiscForm({ ...discForm, code: e.target.value.toUpperCase() })}
                 placeholder="ENTERPRISE20"
-                className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 font-mono focus:outline-none focus:border-indigo-500"
+                className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 font-mono focus:outline-none focus:border-indigo-500"
               />
             </div>
 
@@ -302,7 +302,7 @@ export const DiscountAndTaxManagement: React.FC = () => {
               <select
                 value={discForm.type}
                 onChange={(e) => setDiscForm({ ...discForm, type: e.target.value as any })}
-                className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+                className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
               >
                 <option value="percentage">Percentage (%)</option>
                 <option value="fixed">Fixed Dollar ($)</option>
@@ -318,7 +318,7 @@ export const DiscountAndTaxManagement: React.FC = () => {
                 required
                 value={discForm.value}
                 onChange={(e) => setDiscForm({ ...discForm, value: Number(e.target.value) })}
-                className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 font-mono focus:outline-none focus:border-indigo-500"
+                className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 font-mono focus:outline-none focus:border-indigo-500"
               />
             </div>
 
@@ -328,7 +328,7 @@ export const DiscountAndTaxManagement: React.FC = () => {
                 type="number"
                 value={discForm.minimumPurchase}
                 onChange={(e) => setDiscForm({ ...discForm, minimumPurchase: Number(e.target.value) })}
-                className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 font-mono focus:outline-none focus:border-indigo-500"
+                className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 font-mono focus:outline-none focus:border-indigo-500"
               />
             </div>
           </div>
@@ -340,7 +340,7 @@ export const DiscountAndTaxManagement: React.FC = () => {
                 type="number"
                 value={discForm.maxUsage}
                 onChange={(e) => setDiscForm({ ...discForm, maxUsage: Number(e.target.value) })}
-                className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 font-mono focus:outline-none focus:border-indigo-500"
+                className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 font-mono focus:outline-none focus:border-indigo-500"
               />
             </div>
             <div>
@@ -349,7 +349,7 @@ export const DiscountAndTaxManagement: React.FC = () => {
                 type="date"
                 value={discForm.endDate}
                 onChange={(e) => setDiscForm({ ...discForm, endDate: e.target.value })}
-                className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 font-mono focus:outline-none focus:border-indigo-500"
+                className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 font-mono focus:outline-none focus:border-indigo-500"
               />
             </div>
           </div>
@@ -389,7 +389,7 @@ export const DiscountAndTaxManagement: React.FC = () => {
               value={taxForm.name}
               onChange={(e) => setTaxForm({ ...taxForm, name: e.target.value })}
               placeholder="e.g. EU Cross-Border VAT (20%)"
-              className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+              className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
             />
           </div>
 
@@ -402,7 +402,7 @@ export const DiscountAndTaxManagement: React.FC = () => {
                 required
                 value={taxForm.percentage}
                 onChange={(e) => setTaxForm({ ...taxForm, percentage: Number(e.target.value) })}
-                className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 font-mono focus:outline-none focus:border-indigo-500"
+                className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 font-mono focus:outline-none focus:border-indigo-500"
               />
             </div>
 
@@ -411,7 +411,7 @@ export const DiscountAndTaxManagement: React.FC = () => {
               <select
                 value={taxForm.type}
                 onChange={(e) => setTaxForm({ ...taxForm, type: e.target.value as any })}
-                className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+                className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
               >
                 <option value="gst">GST (Goods & Services Tax)</option>
                 <option value="vat">VAT (Value Added Tax)</option>

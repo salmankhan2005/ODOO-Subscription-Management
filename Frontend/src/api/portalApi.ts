@@ -2,6 +2,49 @@
  * src/api/portalApi.ts — Customer self-service portal API
  */
 import api, { ApiResponse } from './axios';
+import { mapCustomer } from './customerApi';
+import { mapInvoice } from './invoiceApi';
+import { mapPlan } from './planApi';
+import { mapSubscription } from './subscriptionApi';
+import { Payment, PaymentMethod } from '../types';
+
+const paymentMethods: PaymentMethod[] = [
+  'Card',
+  'Bank Transfer',
+  'UPI',
+  'Cash',
+  'Cheque',
+  'Other',
+];
+
+const mapPortalPayment = (value: unknown): Payment => {
+  const payment = value && typeof value === 'object'
+    ? value as Record<string, unknown>
+    : {};
+  const method = payment.payment_method;
+  const status = payment.status;
+  const paymentStatus: Payment['status'] =
+    status === 'completed' || status === 'failed' ? status : 'pending';
+
+  return {
+    id: typeof payment.id === 'string' ? payment.id : '',
+    paymentReference: typeof payment.payment_reference === 'string'
+      ? payment.payment_reference
+      : '',
+    customerId: typeof payment.customer_id === 'string' ? payment.customer_id : '',
+    customerName: typeof payment.customer_name === 'string' ? payment.customer_name : '',
+    invoiceId: typeof payment.invoice_id === 'string' ? payment.invoice_id : '',
+    invoiceNumber: typeof payment.invoice_number === 'string' ? payment.invoice_number : '',
+    method: paymentMethods.find((item) => item === method) || 'Other',
+    amount: typeof payment.amount === 'number' ? payment.amount : Number(payment.amount) || 0,
+    paymentDate: typeof payment.payment_date === 'string' ? payment.payment_date : '',
+    transactionReference: typeof payment.transaction_reference === 'string'
+      ? payment.transaction_reference
+      : '',
+    notes: typeof payment.notes === 'string' ? payment.notes : '',
+    status: paymentStatus,
+  };
+};
 
 export const portalApi = {
   getProfile: async () => {
@@ -20,13 +63,13 @@ export const portalApi = {
   },
 
   getPlans: async () => {
-    const { data } = await api.get<ApiResponse<any[]>>('/portal/plans');
-    return data;
+    const { data } = await api.get<ApiResponse<unknown[]>>('/portal/plans');
+    return { ...data, data: (data.data || []).map(mapPlan) };
   },
 
   getSubscriptions: async () => {
-    const { data } = await api.get<ApiResponse<any[]>>('/portal/subscriptions');
-    return data;
+    const { data } = await api.get<ApiResponse<unknown[]>>('/portal/subscriptions');
+    return { ...data, data: (data.data || []).map(mapSubscription) };
   },
 
   getSubscription: async (id: string) => {
@@ -35,8 +78,8 @@ export const portalApi = {
   },
 
   getInvoices: async () => {
-    const { data } = await api.get<ApiResponse<any[]>>('/portal/invoices');
-    return data;
+    const { data } = await api.get<ApiResponse<unknown[]>>('/portal/invoices');
+    return { ...data, data: (data.data || []).map(mapInvoice) };
   },
 
   getInvoice: async (id: string) => {
@@ -59,7 +102,30 @@ export const portalApi = {
   },
 
   getPayments: async () => {
-    const { data } = await api.get<ApiResponse<any[]>>('/portal/payments');
+    const { data } = await api.get<ApiResponse<unknown[]>>('/portal/payments');
+    return {
+      ...data,
+      data: (data.data || []).map(mapPortalPayment),
+    };
+  },
+
+  purchasePlan: async (planId: string, payload: {
+    quantity: number;
+    payment_method: string;
+    transaction_reference?: string;
+    billing_address: string;
+    country: string;
+    phone?: string;
+    notes?: string;
+  }) => {
+    const { data } = await api.post<ApiResponse<{
+      subscription_id: string;
+      subscription_number: string;
+      invoice_id: string;
+      payment_id: string;
+      payment_reference: string;
+      total_amount: number;
+    }>>(`/portal/plans/${planId}/purchase`, payload);
     return data;
   },
 
@@ -96,7 +162,7 @@ export const portalApi = {
     ]);
     return {
       data: {
-        customer: profile.data,
+        customer: mapCustomer(profile.data || {}),
         subscriptions: subs.data,
         invoices: invoices.data,
         payments: payments.data,
