@@ -22,6 +22,16 @@ export const CustomerManagement: React.FC = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(25);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    per_page: 25,
+    total: 0,
+    total_pages: 1,
+    has_next: false,
+    has_prev: false,
+  });
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [detailCustomer, setDetailCustomer] = useState<Customer | null>(null);
@@ -48,8 +58,18 @@ export const CustomerManagement: React.FC = () => {
 
   const loadCustomers = async () => {
     try {
-      const res = await customerApi.getAll({ search, status: statusFilter });
-      if (res.success) setCustomers(res.data);
+      const res = await customerApi.getAll({
+        search,
+        status: statusFilter,
+        page,
+        per_page: perPage,
+      });
+      if (res.success) {
+        setCustomers(res.data);
+        if (res.pagination) {
+          setPagination(res.pagination);
+        }
+      }
     } catch (error) {
       showToast('Could not load customers', {
         type: 'error',
@@ -60,7 +80,12 @@ export const CustomerManagement: React.FC = () => {
 
   useEffect(() => {
     loadCustomers();
-  }, [search, statusFilter]);
+  }, [search, statusFilter, page, perPage]);
+
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [search, statusFilter, perPage]);
 
   const handleOpenAdd = () => {
     setSelectedCustomer(null);
@@ -149,7 +174,12 @@ export const CustomerManagement: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white font-display">Customer Management</h1>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl font-bold tracking-tight text-white font-display">Customer Management</h1>
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-[#EAF7F5] text-[#1F3F47] border border-[#DDF3F0]">
+              {pagination.total || customers.length} Total Customers
+            </span>
+          </div>
           <p className="text-xs text-slate-400 mt-1">
             Accounts, active recurring profiles, billing addresses, and tax identification.
           </p>
@@ -279,6 +309,66 @@ export const CustomerManagement: React.FC = () => {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Pagination Footer Bar */}
+        <div className="px-5 py-3.5 bg-slate-900/80 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <span>
+              Showing <strong className="text-slate-200">
+                {pagination.total === 0 ? 0 : (pagination.page - 1) * pagination.per_page + 1}
+              </strong> to <strong className="text-slate-200">
+                {Math.min(pagination.page * pagination.per_page, pagination.total)}
+              </strong> of <strong className="text-slate-200">{pagination.total}</strong> customers
+            </span>
+            <span className="text-slate-700 hidden sm:inline">|</span>
+            <div className="flex items-center gap-1.5">
+              <span>Show</span>
+              <select
+                value={perPage}
+                onChange={(e) => setPerPage(Number(e.target.value))}
+                className="bg-slate-800 border border-slate-700 rounded-md px-2 py-1 text-slate-200 text-xs font-mono focus:outline-none focus:border-indigo-500"
+              >
+                <option value={20}>20</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100 (All)</option>
+              </select>
+              <span>per page</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={!pagination.has_prev || page <= 1}
+              className="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/80 text-slate-300 hover:bg-slate-700 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Previous
+            </button>
+
+            {Array.from({ length: pagination.total_pages }, (_, i) => i + 1).map((p) => (
+              <button
+                key={p}
+                onClick={() => setPage(p)}
+                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg font-mono text-xs transition-colors ${
+                  page === p
+                    ? 'bg-indigo-600 text-white font-bold shadow'
+                    : 'border border-slate-800 bg-slate-900/50 text-slate-400 hover:bg-slate-800 hover:text-white'
+                }`}
+              >
+                {p}
+              </button>
+            ))}
+
+            <button
+              onClick={() => setPage((p) => p + 1)}
+              disabled={!pagination.has_next || page >= pagination.total_pages}
+              className="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/80 text-slate-300 hover:bg-slate-700 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Next
+            </button>
+          </div>
         </div>
       </BentoCard>
 
@@ -495,7 +585,7 @@ export const CustomerManagement: React.FC = () => {
                         <div className="text-slate-400">{s.planName} · Renews on {s.nextBillingDate}</div>
                       </div>
                       <div className="flex items-center gap-4">
-                        <span className="font-mono text-slate-100 font-semibold">${s.totalAmount.toLocaleString()}</span>
+                        <span className="font-mono text-slate-100 font-semibold">${(s?.totalAmount ?? 0).toLocaleString()}</span>
                         <StatusBadge status={s.status} />
                       </div>
                     </div>
@@ -517,7 +607,7 @@ export const CustomerManagement: React.FC = () => {
                         <div className="text-slate-400">Date: {inv.invoiceDate} · Due: {inv.dueDate}</div>
                       </div>
                       <div className="flex items-center gap-4">
-                        <span className="font-mono text-slate-100 font-semibold">${inv.totalAmount.toLocaleString()}</span>
+                        <span className="font-mono text-slate-100 font-semibold">${(inv?.totalAmount ?? 0).toLocaleString()}</span>
                         <StatusBadge status={inv.status} />
                       </div>
                     </div>
@@ -538,7 +628,7 @@ export const CustomerManagement: React.FC = () => {
                         <div className="font-mono text-slate-200 font-semibold">{p.paymentReference}</div>
                         <div className="text-slate-400">Method: {p.method} · Date: {p.paymentDate}</div>
                       </div>
-                      <span className="font-mono text-emerald-400 font-semibold">${p.amount.toLocaleString()}</span>
+                      <span className="font-mono text-emerald-400 font-semibold">${(p?.amount ?? 0).toLocaleString()}</span>
                     </div>
                   ))
                 )}

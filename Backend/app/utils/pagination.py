@@ -5,8 +5,8 @@ app/utils/pagination.py — Pagination helper for list endpoints.
 from flask import request
 
 
-def get_pagination_params(default_page: int = 1, default_per_page: int = 20,
-                          max_per_page: int = 100) -> tuple[int, int, int]:
+def get_pagination_params(default_page: int = 1, default_per_page: int = 25,
+                          max_per_page: int = 200) -> tuple[int, int, int]:
     """Return (page, per_page, offset)."""
     try:
         page = max(1, int(request.args.get('page', default_page)))
