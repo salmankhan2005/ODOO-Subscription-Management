@@ -252,7 +252,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ initialTab = 'cu
                     </div>
                     <div className="text-right">
                       <div className="text-2xl font-bold font-mono text-white">
-                        ${s.totalAmount.toLocaleString()}
+                        ${(s.totalAmount ?? 0).toLocaleString()}
                         <span className="text-xs text-slate-400 font-normal"> / {s.billingInterval}</span>
                       </div>
                       <div className="text-[11px] text-slate-400 font-mono">Renews on {s.nextBillingDate}</div>
@@ -262,7 +262,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ initialTab = 'cu
                   <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                     <div className="space-y-1 text-slate-300">
                       <div>
-                        <strong>Included Modules:</strong> {s.lines.map((l) => l.productName).join(', ')}
+                        <strong>Included Modules:</strong> {(s.lines || []).map((l) => l?.productName || 'Module').join(', ') || 'None'}
                       </div>
                       <div className="text-slate-400 text-[11px]">
                         Payment Terms: {s.paymentTerms} · Auto-renewal: {s.autoRenew ? 'Active' : 'Disabled'}
@@ -461,7 +461,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ initialTab = 'cu
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800">
-                  {viewingInvoice.lines.map((l) => (
+                  {(viewingInvoice?.lines || []).map((l) => (
                     <tr key={l.id}>
                       <td className="p-3 font-semibold text-slate-200">{l.productName}</td>
                       <td className="p-3 text-center font-mono">{l.quantity}</td>
