@@ -12,11 +12,8 @@ import {
   Send,
   Headphones,
   MessageSquare,
-  Sparkles,
   Activity,
   Radio,
-  Clock,
-  ShieldCheck,
 } from 'lucide-react';
 import { livekitApi, LiveKitTokenResponse } from '../../api/services';
 import { Customer, Subscription, Invoice } from '../../types';
@@ -70,7 +67,6 @@ export const LiveKitVoiceSupport: React.FC<LiveKitVoiceSupportProps> = ({
   
   const [connectionData, setConnectionData] = useState<LiveKitTokenResponse | null>(null);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
-  const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null);
   const [textInput, setTextInput] = useState('');
 
   // Transcript log with EA and User history
@@ -129,32 +125,35 @@ export const LiveKitVoiceSupport: React.FC<LiveKitVoiceSupportProps> = ({
     });
   }, [isMuted]);
 
-  // ── Voice selection: Exclusively Cora (gentle natural conversational tone) ─
-  const selectCoraVoice = useCallback((voices: SpeechSynthesisVoice[]) => {
-    if (!voices.length) return null;
-    // Look specifically for Cora or the most natural English female voice
-    const priority = ['cora', 'aura', 'deepgram', 'natural', 'jenny', 'aria', 'samantha'];
-    for (const kw of priority) {
-      const match = voices.find(
-        (v) => v.lang.startsWith('en') && v.name.toLowerCase().includes(kw)
-      );
-      if (match) return match;
-    }
-    return voices.find((v) => v.lang === 'en-US' || v.lang === 'en-GB') ?? voices[0] ?? null;
-  }, []);
+  const activeAudioRef = useRef<HTMLAudioElement | null>(null);
+  const selectedVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
 
+  // Pre-load best English voice for fallback TTS (runs once, non-blocking)
   useEffect(() => {
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-    const load = () => {
-      const vs = window.speechSynthesis.getVoices();
-      if (vs.length) setSelectedVoice(selectCoraVoice(vs));
+    const pickVoice = () => {
+      const voices = window.speechSynthesis?.getVoices() ?? [];
+      if (!voices.length) return;
+      // Priority list: high-quality Google/Microsoft en-US voices
+      const PRIO = [
+        'Google US English', 'Microsoft Aria Online', 'Microsoft Zira Online',
+        'Samantha', 'Karen', 'Victoria', 'Allison', 'Ava',
+      ];
+      for (const name of PRIO) {
+        const v = voices.find((x) => x.name.includes(name));
+        if (v) { selectedVoiceRef.current = v; return; }
+      }
+      // Fallback: first en-US female-sounding voice
+      const enUS = voices.filter((v) => v.lang.startsWith('en'));
+      selectedVoiceRef.current = enUS[0] ?? voices[0] ?? null;
     };
-    load();
-    window.speechSynthesis.onvoiceschanged = load;
+    pickVoice();
+    if (window.speechSynthesis) {
+      window.speechSynthesis.onvoiceschanged = pickVoice;
+    }
     return () => {
-      if ('speechSynthesis' in window) window.speechSynthesis.onvoiceschanged = null;
+      if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = null;
     };
-  }, [selectCoraVoice]);
+  }, []);
 
   // ── Web Audio mic capture ─────────────────────────────────────────────
   const startAudio = async () => {
@@ -218,48 +217,32 @@ export const LiveKitVoiceSupport: React.FC<LiveKitVoiceSupportProps> = ({
     setAudioLevel(0);
   };
 
-  // ── Speech synthesis: Single Voice (Cora Deepgram Aura Profile) ─────────
-  const speakResponse = useCallback(
-    (text: string) => {
-      // 1. Cancel any active speech immediately to prevent voice stacking/conflict
-      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-      }
+  const stopActiveAudio = () => {
+    // Cancel Deepgram HTMLAudioElement if playing
+    if (activeAudioRef.current) {
+      activeAudioRef.current.pause();
+      activeAudioRef.current.currentTime = 0;
+      activeAudioRef.current = null;
+    }
+    // Cancel browser speechSynthesis fallback if playing
+    try {
+      if (window.speechSynthesis?.speaking) window.speechSynthesis.cancel();
+    } catch (_) {}
+  };
 
-      // 2. Immediately lock agent speaking state BEFORE utterance starts
+  // ── Deepgram Voice Engine (LiveKit Aura Cora) ──────────────────────────
+  const speakResponse = useCallback(
+    async (text: string) => {
+      stopActiveAudio();
+
       isAgentSpeakingRef.current = true;
       setIsSpeaking(true);
 
-      // 3. Immediately silence speech recognition so the mic doesn't echo agent voice
       try {
         recognitionRef.current?.abort();
       } catch (_) {}
 
-      if (!voiceEnabled || typeof window === 'undefined' || !('speechSynthesis' in window)) {
-        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        setTranscript((prev) => [
-          ...prev,
-          {
-            id: crypto.randomUUID?.() || Math.random().toString(36).slice(2),
-            speaker: 'ea',
-            speakerName: 'EA Cora',
-            text,
-            time,
-          },
-        ]);
-        isAgentSpeakingRef.current = false;
-        setIsSpeaking(false);
-        isProcessingQueryRef.current = false;
-        return;
-      }
-
-      const utt = new SpeechSynthesisUtterance(text);
-      if (selectedVoice) utt.voice = selectedVoice;
-      utt.pitch = 1.02; // Deepgram Cora acoustic tuning
-      utt.rate = 0.98;
-      utt.volume = 1.0;
-
-      // Word stream visualization for EA Cora
+      // Word stream visualization for EA Cora in transcript
       setEaStreamingText('');
       const words = text.split(' ');
       let currentWordIndex = 0;
@@ -270,14 +253,9 @@ export const LiveKitVoiceSupport: React.FC<LiveKitVoiceSupportProps> = ({
         } else {
           clearInterval(streamInterval);
         }
-      }, 65);
+      }, 60);
 
-      utt.onstart = () => {
-        isAgentSpeakingRef.current = true;
-        setIsSpeaking(true);
-      };
-
-      utt.onend = utt.onerror = () => {
+      const finishSpeech = () => {
         clearInterval(streamInterval);
         setEaStreamingText('');
         setIsSpeaking(false);
@@ -294,7 +272,6 @@ export const LiveKitVoiceSupport: React.FC<LiveKitVoiceSupportProps> = ({
           },
         ]);
 
-        // Safety gap: wait 350ms before allowing mic recognition again to prevent acoustic feedback
         setTimeout(() => {
           isAgentSpeakingRef.current = false;
           isProcessingQueryRef.current = false;
@@ -304,9 +281,62 @@ export const LiveKitVoiceSupport: React.FC<LiveKitVoiceSupportProps> = ({
         }, 350);
       };
 
-      window.speechSynthesis.speak(utt);
+      if (!voiceEnabled) {
+        finishSpeech();
+        return;
+      }
+
+      // ── Stream direct Deepgram Aura Cora Audio ───────────────────────────
+      try {
+        const audioBlob = await livekitApi.getDeepgramAudio(text);
+        if (audioBlob && audioBlob.size > 200 && (audioBlob.type.includes('audio') || audioBlob.type.includes('octet'))) {
+          const audioUrl = URL.createObjectURL(audioBlob);
+          const audio = new Audio(audioUrl);
+          activeAudioRef.current = audio;
+          audio.onended = () => {
+            URL.revokeObjectURL(audioUrl);
+            finishSpeech();
+          };
+          audio.onerror = () => {
+            URL.revokeObjectURL(audioUrl);
+            finishSpeech();
+          };
+          await audio.play();
+          return;
+        }
+      } catch (err) {
+        console.warn('Deepgram audio stream fallback:', err);
+      }
+
+      // ── Fallback: Browser speechSynthesis (when Deepgram unreachable) ──
+      if (window.speechSynthesis) {
+        // Cancel any leftover utterances
+        try { window.speechSynthesis.cancel(); } catch (_) {}
+
+        const utt = new SpeechSynthesisUtterance(text);
+        utt.rate  = 0.94;   // Slightly slower = more natural
+        utt.pitch = 1.05;
+        utt.volume = 1.0;
+        // Use pre-selected high-quality voice (not system default)
+        if (selectedVoiceRef.current) utt.voice = selectedVoiceRef.current;
+        utt.onend   = () => finishSpeech();
+        utt.onerror = () => finishSpeech();
+        window.speechSynthesis.speak(utt);
+
+        // Chrome bug: long utterances stall — keep-alive ping every 10s
+        const ssKeepAlive = setInterval(() => {
+          if (!window.speechSynthesis.speaking) { clearInterval(ssKeepAlive); return; }
+          window.speechSynthesis.pause();
+          window.speechSynthesis.resume();
+        }, 10000);
+        utt.onend = () => { clearInterval(ssKeepAlive); finishSpeech(); };
+      } else {
+        // Last resort: visual cadence only (no audio API available)
+        const durationMs = Math.max(1200, Math.min(6000, words.length * 90));
+        setTimeout(() => finishSpeech(), durationMs);
+      }
     },
-    [voiceEnabled, selectedVoice]
+    [voiceEnabled]
   );
 
   // ── Continuous speech recognition with real-time user transcript streaming ─
@@ -521,9 +551,7 @@ export const LiveKitVoiceSupport: React.FC<LiveKitVoiceSupportProps> = ({
   };
 
   const stopCall = () => {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-    }
+    stopActiveAudio();
     try {
       recognitionRef.current?.abort();
     } catch (_) {}

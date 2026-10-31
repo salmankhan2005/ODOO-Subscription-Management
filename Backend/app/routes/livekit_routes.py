@@ -129,3 +129,52 @@ def livekit_tts():
         'voice_model': 'aura-2-cora-en'
     }, message='Deepgram Cora voice profile active')
 
+
+
+@livekit_bp.route('/tts-audio', methods=['POST'])
+def livekit_tts_audio():
+    import os
+    import urllib.request
+    from flask import Response
+
+    body = request.get_json(silent=True) or {}
+    msg = (body.get('text') or '').strip()
+    if not msg:
+        return error_response('Text is required', 400)
+
+    api_key = os.environ.get('DEEPGRAM_API_KEY') or getattr(Config, 'DEEPGRAM_API_KEY', '')
+    model = os.environ.get('LIVEKIT_VOICE_MODEL', 'aura-2-cora-en')
+
+    if api_key:
+        try:
+            url = 'https://api.deepgram.com/v1/speak?model=' + model
+            req_data = json.dumps({'text': msg}).encode('utf-8')
+            req = urllib.request.Request(
+                url,
+                data=req_data,
+                headers={
+                    'Authorization': 'Token ' + api_key,
+                    'Content-Type': 'application/json'
+                },
+                method='POST'
+            )
+            with urllib.request.urlopen(req, timeout=12) as resp:
+                audio_bytes = resp.read()
+                return Response(
+                    audio_bytes,
+                    mimetype='audio/mpeg',
+                    headers={
+                        'Content-Disposition': 'inline; filename=cora_speech.mp3',
+                        'X-Voice-Engine': 'deepgram-aura-cora'
+                    }
+                )
+        except Exception as e:
+            current_app.logger.warning('Deepgram API request error: %s', e)
+
+    return success_response({
+        'status': 'stream_ready',
+        'provider': 'deepgram',
+        'model': model,
+        'voice': 'Cora',
+        'text': msg,
+    })

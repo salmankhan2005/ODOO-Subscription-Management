@@ -34,4 +34,12 @@ export const livekitApi = {
     }>>('/livekit/tts', payload);
     return data;
   },
+  getDeepgramAudio: async (text: string): Promise<Blob | null> => {
+    try {
+      const response = await api.post('/livekit/tts-audio', { text }, { responseType: 'blob' });
+      return response.data as Blob;
+    } catch {
+      return null;
+    }
+  },
 };

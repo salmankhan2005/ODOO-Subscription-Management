@@ -41,6 +41,7 @@ class Config:
     LIVEKIT_URL: str = os.environ.get('LIVEKIT_URL', 'wss://oddoo-hackathon-ulmfmcmg.livekit.cloud')
     LIVEKIT_API_KEY: str = os.environ.get('LIVEKIT_API_KEY', 'APInfGW9ufHjmk9')
     LIVEKIT_API_SECRET: str = os.environ.get('LIVEKIT_API_SECRET', 'FLHvKbawzyAW5pLRvkwDngbzzzc3Q2cvPRLvfKdpx3f')
+    DEEPGRAM_API_KEY: str = os.environ.get('DEEPGRAM_API_KEY', '')
 
     # Rate limiting
     RATELIMIT_DEFAULT: str = '200 per minute'
