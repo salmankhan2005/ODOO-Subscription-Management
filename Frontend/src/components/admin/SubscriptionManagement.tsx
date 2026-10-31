@@ -404,7 +404,7 @@ export const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ 
                       {sub.nextBillingDate}
                     </td>
                     <td className="px-4 py-3.5 text-right font-mono font-semibold text-white">
-                      ${sub.totalAmount.toLocaleString()}
+                      ${(sub.totalAmount ?? 0).toLocaleString()}
                     </td>
                     <td className="px-4 py-3.5">
                       <StatusBadge status={sub.status} />
@@ -895,7 +895,7 @@ export const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ 
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800">
-                    {selectedSub.lines.map((l) => (
+                    {(selectedSub?.lines || []).map((l) => (
                       <tr key={l.id}>
                         <td className="p-3">
                           <div className="font-semibold text-slate-200">{l.productName}</div>

@@ -182,7 +182,7 @@ export const InvoiceManagement: React.FC = () => {
                     </td>
                     <td className="px-4 py-3.5 font-mono text-slate-300">{inv.dueDate}</td>
                     <td className="px-4 py-3.5 text-right font-mono font-semibold text-white">
-                      ${inv.totalAmount.toLocaleString()}
+                      ${(inv.totalAmount ?? 0).toLocaleString()}
                     </td>
                     <td className="px-4 py-3.5 text-right font-mono font-semibold">
                       <span className={inv.outstandingBalance > 0 ? 'text-amber-400' : 'text-slate-400'}>
@@ -322,7 +322,7 @@ export const InvoiceManagement: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800">
-                    {viewingInvoice.lines.map((l) => (
+                    {(viewingInvoice?.lines || []).map((l) => (
                       <tr key={l.id}>
                         <td className="p-3">
                           <div className="font-semibold text-slate-200">{l.productName}</div>
