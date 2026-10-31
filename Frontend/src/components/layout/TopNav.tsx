@@ -10,7 +10,7 @@ export const TopNav: React.FC<TopNavProps> = ({ activeView = 'Overview' }) => {
   const { role } = useAuth();
 
   return (
-    <header className="sticky top-0 z-30 w-full border-b border-slate-800/80 bg-[#0B0F17]/90 backdrop-blur-md">
+    <header className="sticky top-0 z-30 w-full border-b border-slate-800/80 bg-white/95 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <div className="flex min-w-0 items-center gap-3">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-600 text-sm font-bold tracking-wider text-white shadow-lg shadow-indigo-600/30">

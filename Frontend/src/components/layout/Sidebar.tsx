@@ -74,6 +74,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const staffNav: NavItem[] = [
     { id: 'overview', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'customers', label: 'Customers', icon: Users },
+    { id: 'plans', label: 'Plans & Cadences', icon: Layers },
     { id: 'quotations', label: 'Quotations', icon: FileSpreadsheet },
     { id: 'subscriptions', label: 'Subscriptions', icon: Repeat },
     { id: 'invoices', label: 'Invoices', icon: Receipt, badge: overdueCount > 0 ? overdueCount : undefined },
@@ -93,7 +94,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <aside
-      className={`relative z-20 shrink-0 bg-[#0E131F] border-r border-slate-800/80 transition-all duration-200 flex flex-col ${
+      className={`relative z-20 shrink-0 bg-white border-r border-slate-800/80 transition-all duration-200 flex flex-col ${
         collapsed ? 'w-20' : 'w-64'
       }`}
     >
@@ -141,12 +142,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onClick={() => setActiveTab(item.id)}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${
                 isActive
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
+                  ? 'bg-indigo-100 text-indigo-800 shadow-sm'
                   : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60'
               } ${item.highlight && !isActive ? 'text-indigo-400 font-semibold' : ''}`}
               title={collapsed ? item.label : undefined}
             >
-              <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : item.highlight ? 'text-indigo-400' : 'text-slate-400'}`} />
+              <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-indigo-800' : item.highlight ? 'text-indigo-400' : 'text-slate-400'}`} />
               {!collapsed && (
                 <div className="flex-1 flex items-center justify-between truncate">
                   <span className="truncate">{item.label}</span>

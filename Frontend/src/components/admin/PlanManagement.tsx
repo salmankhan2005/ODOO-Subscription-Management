@@ -4,12 +4,13 @@ import { SubscriptionPlan, Product, BillingInterval } from '../../types';
 import { BentoCard } from '../common/BentoCard';
 import { Modal } from '../common/Modal';
 import { useToast } from '../../context/ToastContext';
-import { Plus, Repeat, Calendar, ShieldCheck, Check } from 'lucide-react';
+import { Plus, Check, Pencil, Archive, RotateCcw } from 'lucide-react';
 
 export const PlanManagement: React.FC = () => {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
 
   const { showToast } = useToast();
 
@@ -53,11 +54,79 @@ export const PlanManagement: React.FC = () => {
       showToast('Plan name and product are required', { type: 'error' });
       return;
     }
-    const res = await planApi.create(form);
-    if (res.success) {
-      showToast(`Plan ${res.data.name} activated`);
-      setIsModalOpen(false);
-      loadData();
+    try {
+      const res = editingPlan
+        ? await planApi.update(editingPlan.id, form)
+        : await planApi.create(form);
+      if (res.success) {
+        showToast(editingPlan ? `Plan ${res.data.name} updated` : `Plan ${res.data.name} activated`);
+        setIsModalOpen(false);
+        setEditingPlan(null);
+        loadData();
+      }
+    } catch (error) {
+      showToast('Could not save plan', {
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Please try again.',
+      });
+    }
+  };
+
+  const openCreatePlan = () => {
+    setEditingPlan(null);
+    setForm({
+      name: '',
+      productId: products[0]?.id || '',
+      billingInterval: 'monthly',
+      intervalCount: 1,
+      price: 1200,
+      minimumQuantity: 1,
+      startDate: new Date().toISOString().split('T')[0],
+      endDate: '',
+      autoCloseOnEnd: false,
+      allowEarlyCancel: true,
+      allowPause: true,
+      allowRenewal: true,
+      description: '',
+      status: 'active',
+    });
+    setIsModalOpen(true);
+  };
+
+  const openEditPlan = (plan: SubscriptionPlan) => {
+    setEditingPlan(plan);
+    setForm({
+      name: plan.name,
+      productId: plan.productId,
+      billingInterval: plan.billingInterval,
+      intervalCount: plan.intervalCount,
+      price: plan.price,
+      minimumQuantity: plan.minimumQuantity,
+      startDate: plan.startDate,
+      endDate: plan.endDate || '',
+      autoCloseOnEnd: plan.autoCloseOnEnd,
+      allowEarlyCancel: plan.allowEarlyCancel,
+      allowPause: plan.allowPause,
+      allowRenewal: plan.allowRenewal,
+      description: plan.description,
+      status: plan.status,
+    });
+    setIsModalOpen(true);
+  };
+
+  const togglePlanStatus = async (plan: SubscriptionPlan) => {
+    const nextStatus = plan.status === 'active' ? 'archived' : 'active';
+    try {
+      const result = await planApi.setStatus(plan.id, nextStatus);
+      if (result.success) {
+        showToast(`Plan ${plan.name} ${nextStatus === 'active' ? 'activated' : 'archived'}`);
+        loadData();
+      }
+    } catch (error) {
+      showToast('Could not update plan status', {
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Please try again.',
+      });
     }
   };
 
@@ -73,7 +142,7 @@ export const PlanManagement: React.FC = () => {
         </div>
 
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={openCreatePlan}
           className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-all shadow-md shadow-indigo-600/25"
         >
           <Plus className="w-3.5 h-3.5" />
@@ -98,6 +167,11 @@ export const PlanManagement: React.FC = () => {
                 </div>
 
                 <h3 className="text-base font-bold text-white mt-3">{plan.name}</h3>
+                {plan.status === 'archived' && (
+                  <span className="inline-flex mt-2 rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-semibold uppercase text-slate-600">
+                    Archived
+                  </span>
+                )}
                 <div className="text-xs text-slate-400 mt-0.5">
                   Product: {associatedProd?.name || 'Modular Software'}
                 </div>
@@ -134,6 +208,33 @@ export const PlanManagement: React.FC = () => {
                   </div>
                 </div>
               </div>
+              <div className="mt-4 flex gap-2 border-t border-slate-200 pt-3">
+                <button
+                  type="button"
+                  onClick={() => openEditPlan(plan)}
+                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => togglePlanStatus(plan)}
+                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  {plan.status === 'active' ? (
+                    <>
+                      <Archive className="h-3.5 w-3.5" />
+                      Archive
+                    </>
+                  ) : (
+                    <>
+                      <RotateCcw className="h-3.5 w-3.5" />
+                      Activate
+                    </>
+                  )}
+                </button>
+              </div>
             </BentoCard>
           );
         })}
@@ -143,7 +244,7 @@ export const PlanManagement: React.FC = () => {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Create Subscription Plan"
+        title={editingPlan ? 'Edit Subscription Plan' : 'Create Subscription Plan'}
         subtitle="Configure billing intervals, automated closures, and customer flexibility."
       >
         <form onSubmit={handleCreatePlan} className="space-y-4 text-xs">
@@ -155,7 +256,7 @@ export const PlanManagement: React.FC = () => {
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               placeholder="e.g. Business Pro Annual Edition"
-              className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+              className="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-slate-800 focus:outline-none focus:border-indigo-500"
             />
           </div>
 
@@ -166,7 +267,7 @@ export const PlanManagement: React.FC = () => {
                 required
                 value={form.productId}
                 onChange={(e) => setForm({ ...form, productId: e.target.value })}
-                className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+                className="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-slate-800 focus:outline-none focus:border-indigo-500"
               >
                 {products.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -180,8 +281,11 @@ export const PlanManagement: React.FC = () => {
               <label className="block font-semibold text-slate-300 mb-1">Billing Interval *</label>
               <select
                 value={form.billingInterval}
-                onChange={(e) => setForm({ ...form, billingInterval: e.target.value as any })}
-                className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+                onChange={(e) => setForm({
+                  ...form,
+                  billingInterval: e.target.value as BillingInterval,
+                })}
+                className="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-slate-800 focus:outline-none focus:border-indigo-500"
               >
                 <option value="daily">Daily</option>
                 <option value="weekly">Weekly</option>
@@ -191,7 +295,7 @@ export const PlanManagement: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="block font-semibold text-slate-300 mb-1">Cadence Price ($) *</label>
               <input
@@ -199,7 +303,7 @@ export const PlanManagement: React.FC = () => {
                 required
                 value={form.price}
                 onChange={(e) => setForm({ ...form, price: Number(e.target.value) })}
-                className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+                className="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-slate-800 focus:outline-none focus:border-indigo-500"
               />
             </div>
 
@@ -210,7 +314,41 @@ export const PlanManagement: React.FC = () => {
                 min="1"
                 value={form.minimumQuantity}
                 onChange={(e) => setForm({ ...form, minimumQuantity: Number(e.target.value) })}
-                className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+                className="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-slate-800 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+            <div>
+              <label className="block font-semibold text-slate-300 mb-1">Interval Count</label>
+              <input
+                type="number"
+                required
+                min="1"
+                value={form.intervalCount}
+                onChange={(e) => setForm({ ...form, intervalCount: Number(e.target.value) })}
+                className="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-slate-800 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block font-semibold text-slate-300 mb-1">Available From *</label>
+              <input
+                type="date"
+                required
+                value={form.startDate}
+                onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+                className="w-full rounded-lg border border-slate-300 bg-white p-2.5 text-slate-800"
+              />
+            </div>
+            <div>
+              <label className="block font-semibold text-slate-300 mb-1">Available Until</label>
+              <input
+                type="date"
+                value={form.endDate}
+                min={form.startDate}
+                onChange={(e) => setForm({ ...form, endDate: e.target.value })}
+                className="w-full rounded-lg border border-slate-300 bg-white p-2.5 text-slate-800"
               />
             </div>
           </div>
@@ -228,6 +366,16 @@ export const PlanManagement: React.FC = () => {
                 className="rounded border-slate-700 bg-slate-800 text-indigo-600 focus:ring-0"
               />
               <span className="text-slate-300">Allow customers & staff to pause subscriptions</span>
+            </label>
+
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.allowEarlyCancel}
+                onChange={(e) => setForm({ ...form, allowEarlyCancel: e.target.checked })}
+                className="rounded border-slate-700 bg-slate-800 text-indigo-600 focus:ring-0"
+              />
+              <span className="text-slate-300">Allow early cancellation</span>
             </label>
 
             <label className="flex items-center gap-2 cursor-pointer">
@@ -258,14 +406,17 @@ export const PlanManagement: React.FC = () => {
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               placeholder="Terms and entitlement details..."
-              className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+              className="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-slate-800 focus:outline-none focus:border-indigo-500"
             />
           </div>
 
           <div className="flex justify-end gap-2 pt-4 border-t border-slate-800">
             <button
               type="button"
-              onClick={() => setIsModalOpen(false)}
+              onClick={() => {
+                setIsModalOpen(false);
+                setEditingPlan(null);
+              }}
               className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition-colors"
             >
               Cancel
@@ -274,7 +425,7 @@ export const PlanManagement: React.FC = () => {
               type="submit"
               className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-all shadow-md shadow-indigo-600/30"
             >
-              Save & Activate Plan
+              {editingPlan ? 'Save Plan Changes' : 'Save & Activate Plan'}
             </button>
           </div>
         </form>

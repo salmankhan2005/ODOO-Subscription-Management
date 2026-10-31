@@ -34,3 +34,17 @@ dashboard is restored when the host URL is reopened in that tab. On reload and
 account switches, the app verifies the selected session with the backend before
 rendering its workspace. Backend role checks and customer ownership checks
 remain the authority for API access.
+
+## UI color palette
+
+The shared Tailwind color tokens are themed in `src/index.css`:
+
+- Page background: `#F7FAFA`
+- Sidebar and content cards: `#FFFFFF`
+- Primary teal: `#345C64`
+- Deep teal actions: `#1F3F47`
+- Selected and hover surfaces: `#DDF3F0`
+- Chart/success teal: `#2E9F92`
+- Coral alerts: `#E96F50`
+- Main text: `#252B2E`
+- Borders: `#E5ECEC`

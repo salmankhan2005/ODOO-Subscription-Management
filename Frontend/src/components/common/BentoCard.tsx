@@ -25,12 +25,11 @@ export const BentoCard: React.FC<BentoCardProps> = ({
     <div
       id={id}
       onClick={onClick}
-      className={`relative rounded-2xl bg-[#111827]/70 backdrop-blur-xl border border-slate-800/80 p-5 md:p-6 transition-all duration-200 overflow-hidden ${
-        glow ? 'hover:border-indigo-500/40 hover:shadow-[0_0_30px_-5px_rgba(99,102,241,0.15)]' : 'hover:border-slate-700/80'
+      className={`relative rounded-2xl bg-white border border-slate-800/80 p-5 md:p-6 shadow-sm transition-all duration-200 overflow-hidden ${
+        glow ? 'hover:border-indigo-500/40 hover:shadow-[0_8px_24px_-8px_rgba(46,159,146,0.22)]' : 'hover:border-slate-700/80'
       } ${onClick ? 'cursor-pointer' : ''} ${className}`}
     >
-      {/* Subtle illuminated corner accent */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-500/5 to-transparent rounded-bl-full pointer-events-none" />
+      <div className="pointer-events-none absolute right-0 top-0 h-24 w-24 rounded-bl-full bg-gradient-to-br from-indigo-100/70 to-transparent" />
 
       {(title || headerAction) && (
         <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-800/60">

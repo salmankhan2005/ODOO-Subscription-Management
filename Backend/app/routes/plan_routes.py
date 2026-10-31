@@ -4,7 +4,7 @@ app/routes/plan_routes.py
 
 from flask import Blueprint, request
 from app.middleware.authentication import require_auth
-from app.middleware.authorization import admin_only, admin_or_staff
+from app.middleware.authorization import admin_or_staff
 from app.services import plan_service
 from app.utils.response import success_response, created_response, error_response
 from app.utils.validators import require_fields
@@ -27,7 +27,7 @@ def list_plans():
 
 @plan_bp.post('')
 @require_auth
-@admin_only
+@admin_or_staff
 def create_plan():
     data = request.get_json(force=True, silent=True) or {}
     missing = require_fields(data, ['name', 'billing_interval', 'base_price'])
@@ -51,7 +51,7 @@ def get_plan(plan_id):
 
 @plan_bp.put('/<plan_id>')
 @require_auth
-@admin_only
+@admin_or_staff
 def update_plan(plan_id):
     data = request.get_json(force=True, silent=True) or {}
     result, err = plan_service.update_plan(plan_id, data)
@@ -62,7 +62,7 @@ def update_plan(plan_id):
 
 @plan_bp.delete('/<plan_id>')
 @require_auth
-@admin_only
+@admin_or_staff
 def delete_plan(plan_id):
     result, err = plan_service.set_plan_status(plan_id, 'archived')
     if err:
@@ -72,7 +72,7 @@ def delete_plan(plan_id):
 
 @plan_bp.patch('/<plan_id>/status')
 @require_auth
-@admin_only
+@admin_or_staff
 def set_plan_status(plan_id):
     data = request.get_json(force=True, silent=True) or {}
     status = data.get('status', 'active')

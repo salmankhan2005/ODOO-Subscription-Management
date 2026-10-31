@@ -362,7 +362,7 @@ export const QuotationManagement: React.FC = () => {
                   <select
                     value={selectedCustomerId}
                     onChange={(e) => setSelectedCustomerId(e.target.value)}
-                    className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
                   >
                     {customers.map((c) => (
                       <option key={c.id} value={c.id}>
@@ -377,7 +377,7 @@ export const QuotationManagement: React.FC = () => {
                   <select
                     value={selectedPlanId}
                     onChange={(e) => setSelectedPlanId(e.target.value)}
-                    className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
                   >
                     {plans.map((p) => (
                       <option key={p.id} value={p.id}>
@@ -394,7 +394,7 @@ export const QuotationManagement: React.FC = () => {
                   <select
                     value={validDays}
                     onChange={(e) => setValidDays(Number(e.target.value))}
-                    className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
                   >
                     <option value={15}>15 Days Validity</option>
                     <option value={30}>30 Days Validity (Standard)</option>
@@ -408,7 +408,7 @@ export const QuotationManagement: React.FC = () => {
                     type="text"
                     value={paymentTerms}
                     onChange={(e) => setPaymentTerms(e.target.value)}
-                    className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
                   />
                 </div>
               </div>
@@ -455,7 +455,7 @@ export const QuotationManagement: React.FC = () => {
                           <select
                             value={line.productId}
                             onChange={(e) => handleProductChange(line.id, e.target.value)}
-                            className="w-full bg-[#0B0F17] border border-slate-700 rounded-lg p-2 text-slate-100"
+                            className="w-full bg-[#F7FAFA] border border-slate-700 rounded-lg p-2 text-slate-100"
                           >
                             {products.map((p) => (
                               <option key={p.id} value={p.id}>
@@ -471,7 +471,7 @@ export const QuotationManagement: React.FC = () => {
                           <select
                             value={line.variantId || ''}
                             onChange={(e) => handleVariantChange(line.id, e.target.value)}
-                            className="w-full bg-[#0B0F17] border border-slate-700 rounded-lg p-2 text-slate-100 font-mono text-[11px]"
+                            className="w-full bg-[#F7FAFA] border border-slate-700 rounded-lg p-2 text-slate-100 font-mono text-[11px]"
                           >
                             {currentProd?.variants.map((v) => (
                               <option key={v.id} value={v.id}>
@@ -489,7 +489,7 @@ export const QuotationManagement: React.FC = () => {
                             min="1"
                             value={line.quantity}
                             onChange={(e) => updateLineQty(line.id, Number(e.target.value))}
-                            className="w-full bg-[#0B0F17] border border-slate-700 rounded-lg p-2 text-slate-100 font-mono"
+                            className="w-full bg-[#F7FAFA] border border-slate-700 rounded-lg p-2 text-slate-100 font-mono"
                           />
                         </div>
 
@@ -567,7 +567,7 @@ export const QuotationManagement: React.FC = () => {
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="e.g. Special enterprise pricing valid through end of quarter..."
-                  className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
                 />
               </div>
 

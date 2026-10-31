@@ -71,7 +71,7 @@ export const RoleSwitcher: React.FC = () => {
         {menuOpen && (
           <div
             role="menu"
-            className="absolute right-0 top-full z-50 mt-2 w-72 rounded-xl border border-slate-700 bg-[#111827] p-2 shadow-2xl"
+            className="absolute right-0 top-full z-50 mt-2 w-72 rounded-xl border border-slate-700 bg-[#FFFFFF] p-2 shadow-2xl"
           >
             <p className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
               Signed-in accounts

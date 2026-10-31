@@ -169,6 +169,11 @@ api.interceptors.response.use(
         : requestToken
         ? tokenStorage.getAccountForAccessToken(requestToken)
         : undefined;
+      if (account && requestToken && account.access_token !== requestToken) {
+        original.headers.Authorization = `Bearer ${account.access_token}`;
+        return api(original);
+      }
+
       const refreshToken = account?.refresh_token ||
         (original._authAccountId ? undefined : tokenStorage.getRefresh());
       if (refreshToken) {

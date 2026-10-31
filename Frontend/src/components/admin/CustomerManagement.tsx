@@ -47,8 +47,15 @@ export const CustomerManagement: React.FC = () => {
   });
 
   const loadCustomers = async () => {
-    const res = await customerApi.getAll(search, statusFilter);
-    if (res.success) setCustomers(res.data);
+    try {
+      const res = await customerApi.getAll({ search, status: statusFilter });
+      if (res.success) setCustomers(res.data);
+    } catch (error) {
+      showToast('Could not load customers', {
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Please try again.',
+      });
+    }
   };
 
   useEffect(() => {
@@ -175,7 +182,7 @@ export const CustomerManagement: React.FC = () => {
             placeholder="Search by customer, company, or email..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-[#111827] border border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+            className="w-full bg-[#FFFFFF] border border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
           />
         </div>
 
@@ -239,12 +246,12 @@ export const CustomerManagement: React.FC = () => {
                       {c.activeSubscriptionsCount}
                     </td>
                     <td className="px-4 py-3.5 text-right font-mono font-semibold">
-                      <span className={c.outstandingBalance > 0 ? 'text-rose-400' : 'text-slate-400'}>
-                        ${c.outstandingBalance.toLocaleString()}
+                      <span className={(c.outstandingBalance ?? 0) > 0 ? 'text-rose-400' : 'text-slate-400'}>
+                        ${Number(c.outstandingBalance ?? 0).toLocaleString()}
                       </span>
                     </td>
                     <td className="px-4 py-3.5 text-right font-mono font-semibold text-emerald-400">
-                      ${c.totalRevenue.toLocaleString()}
+                      ${Number(c.totalRevenue ?? 0).toLocaleString()}
                     </td>
                     <td className="px-4 py-3.5">
                       <StatusBadge status={c.status} />
@@ -292,7 +299,7 @@ export const CustomerManagement: React.FC = () => {
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="e.g. Sarah Jenkins"
-                className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+                className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
               />
             </div>
 
@@ -304,7 +311,7 @@ export const CustomerManagement: React.FC = () => {
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 placeholder="e.g. sarah@apexlogistics.com"
-                className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+                className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
               />
             </div>
           </div>
@@ -318,7 +325,7 @@ export const CustomerManagement: React.FC = () => {
                 value={formData.company}
                 onChange={(e) => setFormData({ ...formData, company: e.target.value })}
                 placeholder="e.g. Apex Global Logistics"
-                className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+                className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
               />
             </div>
 
@@ -329,7 +336,7 @@ export const CustomerManagement: React.FC = () => {
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 placeholder="e.g. +1 (555) 349-2810"
-                className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+                className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
               />
             </div>
           </div>
@@ -341,7 +348,7 @@ export const CustomerManagement: React.FC = () => {
               value={formData.billingAddress}
               onChange={(e) => setFormData({ ...formData, billingAddress: e.target.value })}
               placeholder="e.g. 450 Harbor Blvd, Suite 800, San Francisco, CA"
-              className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+              className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
             />
           </div>
 
@@ -352,7 +359,7 @@ export const CustomerManagement: React.FC = () => {
                 type="text"
                 value={formData.country}
                 onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+                className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
               />
             </div>
 
@@ -363,7 +370,7 @@ export const CustomerManagement: React.FC = () => {
                 value={formData.taxId}
                 onChange={(e) => setFormData({ ...formData, taxId: e.target.value })}
                 placeholder="e.g. US-EIN-94820194"
-                className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+                className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
               />
             </div>
 
@@ -372,7 +379,7 @@ export const CustomerManagement: React.FC = () => {
               <select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+                className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
               >
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>

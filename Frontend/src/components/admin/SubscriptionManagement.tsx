@@ -1,30 +1,70 @@
 import React, { useState, useEffect } from 'react';
-import { subscriptionApi, invoiceApi, paymentApi } from '../../api/services';
-import { Subscription, SubscriptionStatus, Invoice, Payment } from '../../types';
+import {
+  subscriptionApi,
+  invoiceApi,
+  paymentApi,
+  customerApi,
+  planApi,
+} from '../../api/services';
+import {
+  Subscription,
+  SubscriptionStatus,
+  Invoice,
+  Payment,
+  Customer,
+  SubscriptionPlan,
+} from '../../types';
 import { BentoCard } from '../common/BentoCard';
 import { StatusBadge } from '../common/StatusBadge';
 import { Modal } from '../common/Modal';
 import { useToast } from '../../context/ToastContext';
 import {
-  Repeat,
   Search,
-  Filter,
   Eye,
   Play,
   Pause,
   RotateCcw,
   XCircle,
   FileCheck,
-  Calendar,
-  Layers,
-  Download
+  Download,
+  Plus,
+  Pencil,
+  Trash2
 } from 'lucide-react';
 
-export const SubscriptionManagement: React.FC = () => {
+interface SubscriptionManagementProps {
+  onNavigate?: (tab: string) => void;
+}
+
+export const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ onNavigate }) => {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
+  const [isLoadingOptions, setIsLoadingOptions] = useState(false);
+  const [optionsError, setOptionsError] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [selectedSub, setSelectedSub] = useState<Subscription | null>(null);
+  const [editingSub, setEditingSub] = useState<Subscription | null>(null);
+  const [deletingSub, setDeletingSub] = useState<Subscription | null>(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [subscriptionForm, setSubscriptionForm] = useState({
+    customerId: '',
+    planId: '',
+    quantity: 1,
+    startDate: new Date().toISOString().slice(0, 10),
+    expiryDate: '',
+    paymentTerms: 'Due on receipt',
+    autoRenew: true,
+    notes: '',
+  });
+  const [editForm, setEditForm] = useState({
+    paymentTerms: '',
+    expiryDate: '',
+    autoRenew: true,
+    notes: '',
+  });
   const [activeTab, setActiveTab] = useState<'overview' | 'lines' | 'invoices' | 'payments' | 'activity'>('overview');
 
   // Related invoices & payments for detail modal
@@ -42,26 +82,179 @@ export const SubscriptionManagement: React.FC = () => {
 
   const { showToast } = useToast();
 
-  const loadSubscriptions = async () => {
-    const res = await subscriptionApi.getAll(statusFilter);
-    if (res.success) {
-      let data = res.data;
-      if (search.trim()) {
-        const q = search.toLowerCase();
-        data = data.filter(
-          (s) =>
-            s.subscriptionNumber.toLowerCase().includes(q) ||
-            s.customerName.toLowerCase().includes(q) ||
-            s.planName.toLowerCase().includes(q)
-        );
+  const loadFormOptions = async () => {
+    setIsLoadingOptions(true);
+    setOptionsError('');
+    try {
+      const customerResponse = await customerApi.getAll({ status: 'active', per_page: 100 });
+      if (customerResponse.success) {
+        setCustomers(customerResponse.data.filter((customer) => customer.status === 'active'));
       }
-      setSubscriptions(data);
+      const firstPlanPage = await planApi.getAll({
+        status: 'all',
+        page: 1,
+        per_page: 100,
+      });
+      if (!firstPlanPage.success) {
+        throw new Error(firstPlanPage.message || 'The plan list could not be loaded');
+      }
+
+      const activePlans = firstPlanPage.data.filter((plan) => plan.status === 'active');
+      const totalPages = firstPlanPage.pagination?.total_pages || 1;
+      for (let page = 2; page <= totalPages; page += 1) {
+        const planPage = await planApi.getAll({
+          status: 'all',
+          page,
+          per_page: 100,
+        });
+        if (!planPage.success) {
+          throw new Error(planPage.message || `Could not load plan page ${page}`);
+        }
+        activePlans.push(...planPage.data.filter((plan) => plan.status === 'active'));
+      }
+      setPlans(activePlans);
+      setSubscriptionForm((current) => {
+        if (activePlans.some((plan) => plan.id === current.planId)) return current;
+        const firstPlan = activePlans[0];
+        return {
+          ...current,
+          planId: firstPlan?.id || '',
+          quantity: firstPlan?.minimumQuantity || 1,
+        };
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Please try again.';
+      setOptionsError(message);
+      setPlans([]);
+      showToast('Could not load subscription form options', {
+        type: 'error',
+        message,
+      });
+    } finally {
+      setIsLoadingOptions(false);
+    }
+  };
+
+  const loadSubscriptions = async () => {
+    try {
+      const res = await subscriptionApi.getAll(
+        statusFilter === 'all' ? undefined : { status: statusFilter }
+      );
+      if (res.success) {
+        let data = res.data;
+        if (search.trim()) {
+          const q = search.toLowerCase();
+          data = data.filter(
+            (s) =>
+              s.subscriptionNumber.toLowerCase().includes(q) ||
+              s.customerName.toLowerCase().includes(q) ||
+              s.planName.toLowerCase().includes(q)
+          );
+        }
+        setSubscriptions(data);
+      }
+    } catch (error) {
+      showToast('Could not load subscriptions', {
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Please try again.',
+      });
     }
   };
 
   useEffect(() => {
-    loadSubscriptions();
+    void loadSubscriptions();
   }, [statusFilter, search]);
+
+  const openCreateForm = () => {
+    setEditingSub(null);
+    setSubscriptionForm({
+      customerId: customers[0]?.id || '',
+      planId: plans[0]?.id || '',
+      quantity: plans[0]?.minimumQuantity || 1,
+      startDate: new Date().toISOString().slice(0, 10),
+      expiryDate: '',
+      paymentTerms: 'Due on receipt',
+      autoRenew: true,
+      notes: '',
+    });
+    setOptionsError('');
+    setIsFormOpen(true);
+    void loadFormOptions();
+  };
+
+  const openEditForm = (sub: Subscription) => {
+    setEditingSub(sub);
+    setEditForm({
+      paymentTerms: sub.paymentTerms,
+      expiryDate: sub.expiryDate || '',
+      autoRenew: sub.autoRenew,
+      notes: sub.notes || '',
+    });
+    setIsFormOpen(true);
+  };
+
+  const handleSaveSubscription = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setIsSaving(true);
+    try {
+      if (editingSub) {
+        const response = await subscriptionApi.update(editingSub.id, {
+          payment_terms: editForm.paymentTerms,
+          expiry_date: editForm.expiryDate || null,
+          auto_renew: editForm.autoRenew,
+          notes: editForm.notes,
+        });
+        if (!response.success) throw new Error(response.message || 'Subscription update failed');
+        showToast(`Subscription ${editingSub.subscriptionNumber} updated`);
+      } else {
+        if (!subscriptionForm.customerId || !subscriptionForm.planId) {
+          throw new Error('Choose a customer and plan before creating a subscription');
+        }
+        const response = await subscriptionApi.create({
+          customer_id: subscriptionForm.customerId,
+          plan_id: subscriptionForm.planId,
+          quantity: subscriptionForm.quantity,
+          start_date: subscriptionForm.startDate,
+          expiry_date: subscriptionForm.expiryDate || null,
+          payment_terms: subscriptionForm.paymentTerms,
+          auto_renew: subscriptionForm.autoRenew,
+          notes: subscriptionForm.notes,
+        });
+        if (!response.success) throw new Error(response.message || 'Subscription creation failed');
+        showToast(`Subscription ${response.data.subscriptionNumber} created as draft`);
+      }
+      setIsFormOpen(false);
+      setEditingSub(null);
+      await loadSubscriptions();
+    } catch (error) {
+      showToast(editingSub ? 'Could not update subscription' : 'Could not create subscription', {
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Please try again.',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteSubscription = async () => {
+    if (!deletingSub) return;
+    try {
+      const response = await subscriptionApi.delete(deletingSub.id);
+      if (!response.success) throw new Error(response.message || 'Subscription delete failed');
+      showToast(
+        response.data?.deleted
+          ? `Draft subscription ${deletingSub.subscriptionNumber} deleted`
+          : `Subscription ${deletingSub.subscriptionNumber} closed; billing history retained`
+      );
+      setDeletingSub(null);
+      await loadSubscriptions();
+    } catch (error) {
+      showToast('Could not delete subscription', {
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Please try again.',
+      });
+    }
+  };
 
   const handleOpenDetail = async (sub: Subscription) => {
     setSelectedSub(sub);
@@ -111,6 +304,8 @@ export const SubscriptionManagement: React.FC = () => {
     showToast('Subscription roster exported');
   };
 
+  const selectedPlanForCreate = plans.find((plan) => plan.id === subscriptionForm.planId);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -122,13 +317,22 @@ export const SubscriptionManagement: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={exportSubscriptionsCSV}
-          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 hover:bg-slate-800 text-slate-300 text-xs font-medium transition-all"
-        >
-          <Download className="w-3.5 h-3.5" />
-          <span>Export CSV</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={exportSubscriptionsCSV}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-medium transition-all"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Export CSV</span>
+          </button>
+          <button
+            onClick={openCreateForm}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#1F3F47] hover:bg-[#345C64] text-white text-xs font-semibold transition-all"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Create Subscription</span>
+          </button>
+        </div>
       </div>
 
       {/* Filter and Search Bar */}
@@ -140,7 +344,7 @@ export const SubscriptionManagement: React.FC = () => {
             placeholder="Search by subscription, customer, or plan..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-[#111827] border border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+            className="w-full bg-[#FFFFFF] border border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
           />
         </div>
 
@@ -214,6 +418,22 @@ export const SubscriptionManagement: React.FC = () => {
                         >
                           <Eye className="w-4 h-4" />
                         </button>
+                        <button
+                          onClick={() => openEditForm(sub)}
+                          className="p-1.5 rounded text-slate-500 hover:text-[#1F3F47] hover:bg-slate-100 transition-colors"
+                          title="Edit Subscription Details"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => setDeletingSub(sub)}
+                          className="p-1.5 rounded text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                          title={sub.status === 'draft'
+                            ? 'Delete Draft Subscription'
+                            : 'Close or cancel; keep billing history'}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
 
                         {sub.status === 'active' && (
                           <button
@@ -272,6 +492,311 @@ export const SubscriptionManagement: React.FC = () => {
           </table>
         </div>
       </BentoCard>
+
+      <Modal
+        isOpen={isFormOpen}
+        onClose={() => {
+          if (!isSaving) {
+            setIsFormOpen(false);
+            setEditingSub(null);
+          }
+        }}
+        title={editingSub ? 'Edit Subscription Details' : 'Create Subscription'}
+        subtitle={editingSub
+          ? 'Update payment terms, expiry, renewal setting, and notes. Billing amounts and history are preserved.'
+          : 'Choose an active customer and plan. New subscriptions begin as drafts.'}
+        maxWidth="2xl"
+      >
+        {editingSub ? (
+          <form onSubmit={handleSaveSubscription} className="space-y-4 text-sm">
+            <label className="block">
+              <span className="mb-1 block font-medium text-[#252B2E]">Payment Terms</span>
+              <input
+                value={editForm.paymentTerms}
+                onChange={(event) => setEditForm({ ...editForm, paymentTerms: event.target.value })}
+                className="w-full rounded-lg border border-slate-300 bg-white p-2.5 text-[#252B2E]"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1 block font-medium text-[#252B2E]">Expiry Date</span>
+              <input
+                type="date"
+                min={editingSub.startDate}
+                value={editForm.expiryDate}
+                onChange={(event) => setEditForm({ ...editForm, expiryDate: event.target.value })}
+                className="w-full rounded-lg border border-slate-300 bg-white p-2.5 text-[#252B2E]"
+              />
+            </label>
+            <label className="flex items-center gap-2 text-[#252B2E]">
+              <input
+                type="checkbox"
+                checked={editForm.autoRenew}
+                onChange={(event) => setEditForm({ ...editForm, autoRenew: event.target.checked })}
+              />
+              Automatically renew at the end of the billing cycle
+            </label>
+            <label className="block">
+              <span className="mb-1 block font-medium text-[#252B2E]">Notes</span>
+              <textarea
+                rows={3}
+                maxLength={2000}
+                value={editForm.notes}
+                onChange={(event) => setEditForm({ ...editForm, notes: event.target.value })}
+                className="w-full rounded-lg border border-slate-300 bg-white p-2.5 text-[#252B2E]"
+              />
+            </label>
+            <div className="flex justify-end gap-2 border-t border-slate-200 pt-4">
+              <button
+                type="button"
+                disabled={isSaving}
+                onClick={() => setIsFormOpen(false)}
+                className="rounded-lg border border-slate-300 px-4 py-2 text-[#252B2E]"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSaving}
+                className="rounded-lg bg-[#1F3F47] px-4 py-2 font-semibold text-white disabled:opacity-60"
+              >
+                {isSaving ? 'Saving…' : 'Save Changes'}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <form onSubmit={handleSaveSubscription} className="space-y-4 text-sm">
+            {isLoadingOptions && (
+              <p role="status" className="rounded-lg bg-[#EAF7F5] p-3 text-[#1F3F47]">
+                Loading active customers and plans…
+              </p>
+            )}
+            {!isLoadingOptions && optionsError && (
+              <div role="alert" className="flex items-center justify-between gap-3 rounded-lg bg-rose-50 p-3 text-rose-800">
+                <span>Could not load active plans: {optionsError}</span>
+                <button
+                  type="button"
+                  onClick={() => void loadFormOptions()}
+                  className="shrink-0 rounded-md border border-rose-300 px-3 py-1.5 font-semibold hover:bg-rose-100"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+            {!isLoadingOptions && !optionsError && customers.length === 0 && (
+              <p role="alert" className="rounded-lg bg-amber-50 p-3 text-amber-800">
+                Create or activate a customer before creating a subscription.
+              </p>
+            )}
+            {!isLoadingOptions && !optionsError && plans.length === 0 && (
+              <div role="alert" className="flex flex-col gap-3 rounded-lg bg-amber-50 p-3 text-amber-800 sm:flex-row sm:items-center sm:justify-between">
+                <span>No active plans were found. Create or activate a plan, then refresh this list.</span>
+                <div className="flex shrink-0 gap-2">
+                  {onNavigate && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsFormOpen(false);
+                        onNavigate('plans');
+                      }}
+                      className="rounded-md border border-amber-300 px-3 py-1.5 font-semibold hover:bg-amber-100"
+                    >
+                      Create a Plan
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => void loadFormOptions()}
+                    className="rounded-md border border-amber-300 px-3 py-1.5 font-semibold hover:bg-amber-100"
+                  >
+                    Refresh
+                  </button>
+                </div>
+              </div>
+            )}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block">
+                <span className="mb-1 block font-medium text-[#252B2E]">Customer *</span>
+                <select
+                  required
+                  value={subscriptionForm.customerId}
+                  onChange={(event) => setSubscriptionForm({
+                    ...subscriptionForm,
+                    customerId: event.target.value,
+                  })}
+                  className="w-full rounded-lg border border-slate-300 bg-white p-2.5 text-[#252B2E]"
+                >
+                  <option value="">Select customer</option>
+                  {customers.map((customer) => (
+                    <option key={customer.id} value={customer.id}>
+                      {customer.name} {customer.company ? `· ${customer.company}` : ''}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block">
+                <span className="mb-1 block font-medium text-[#252B2E]">Plan *</span>
+                <select
+                  required
+                  value={subscriptionForm.planId}
+                  onChange={(event) => {
+                    const plan = plans.find((item) => item.id === event.target.value);
+                    setSubscriptionForm({
+                      ...subscriptionForm,
+                      planId: event.target.value,
+                      quantity: plan?.minimumQuantity || 1,
+                    });
+                  }}
+                  className="w-full rounded-lg border border-slate-300 bg-white p-2.5 text-[#252B2E]"
+                >
+                  <option value="">Select plan</option>
+                  {plans.map((plan) => (
+                    <option key={plan.id} value={plan.id}>
+                      {plan.name} · ${plan.price.toLocaleString()} / {plan.billingInterval}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <label className="block">
+                <span className="mb-1 block font-medium text-[#252B2E]">Quantity *</span>
+                <input
+                  type="number"
+                  required
+                  min={selectedPlanForCreate?.minimumQuantity || 1}
+                  max={10000}
+                  value={subscriptionForm.quantity}
+                  onChange={(event) => setSubscriptionForm({
+                    ...subscriptionForm,
+                    quantity: Number(event.target.value),
+                  })}
+                  className="w-full rounded-lg border border-slate-300 bg-white p-2.5 text-[#252B2E]"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block font-medium text-[#252B2E]">Start Date *</span>
+                <input
+                  type="date"
+                  required
+                  value={subscriptionForm.startDate}
+                  onChange={(event) => setSubscriptionForm({
+                    ...subscriptionForm,
+                    startDate: event.target.value,
+                  })}
+                  className="w-full rounded-lg border border-slate-300 bg-white p-2.5 text-[#252B2E]"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block font-medium text-[#252B2E]">Expiry Date</span>
+                <input
+                  type="date"
+                  min={subscriptionForm.startDate}
+                  value={subscriptionForm.expiryDate}
+                  onChange={(event) => setSubscriptionForm({
+                    ...subscriptionForm,
+                    expiryDate: event.target.value,
+                  })}
+                  className="w-full rounded-lg border border-slate-300 bg-white p-2.5 text-[#252B2E]"
+                />
+              </label>
+            </div>
+            {selectedPlanForCreate && (
+              <div className="rounded-lg bg-[#F7FAFA] p-3 text-[#5D696C]">
+                Draft total: <strong className="font-mono text-[#252B2E]">
+                  ${(selectedPlanForCreate.price * subscriptionForm.quantity).toLocaleString()}
+                </strong>{' '}
+                per {selectedPlanForCreate.billingInterval} cadence
+              </div>
+            )}
+            <label className="block">
+              <span className="mb-1 block font-medium text-[#252B2E]">Payment Terms</span>
+              <input
+                value={subscriptionForm.paymentTerms}
+                onChange={(event) => setSubscriptionForm({
+                  ...subscriptionForm,
+                  paymentTerms: event.target.value,
+                })}
+                className="w-full rounded-lg border border-slate-300 bg-white p-2.5 text-[#252B2E]"
+              />
+            </label>
+            <label className="flex items-center gap-2 text-[#252B2E]">
+              <input
+                type="checkbox"
+                checked={subscriptionForm.autoRenew}
+                onChange={(event) => setSubscriptionForm({
+                  ...subscriptionForm,
+                  autoRenew: event.target.checked,
+                })}
+              />
+              Automatically renew at the end of the billing cycle
+            </label>
+            <label className="block">
+              <span className="mb-1 block font-medium text-[#252B2E]">Notes</span>
+              <textarea
+                rows={2}
+                maxLength={2000}
+                value={subscriptionForm.notes}
+                onChange={(event) => setSubscriptionForm({
+                  ...subscriptionForm,
+                  notes: event.target.value,
+                })}
+                className="w-full rounded-lg border border-slate-300 bg-white p-2.5 text-[#252B2E]"
+              />
+            </label>
+            <div className="flex justify-end gap-2 border-t border-slate-200 pt-4">
+              <button
+                type="button"
+                disabled={isSaving}
+                onClick={() => setIsFormOpen(false)}
+                className="rounded-lg border border-slate-300 px-4 py-2 text-[#252B2E]"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSaving || isLoadingOptions || Boolean(optionsError) || customers.length === 0 || plans.length === 0}
+                className="inline-flex items-center gap-2 rounded-lg bg-[#1F3F47] px-4 py-2 font-semibold text-white disabled:opacity-60"
+              >
+                <Plus className="h-4 w-4" />
+                {isSaving ? 'Creating…' : 'Create Draft Subscription'}
+              </button>
+            </div>
+          </form>
+        )}
+      </Modal>
+
+      <Modal
+        isOpen={!!deletingSub}
+        onClose={() => setDeletingSub(null)}
+        title="Delete or close subscription?"
+        subtitle={deletingSub?.subscriptionNumber}
+        maxWidth="sm"
+      >
+        <div className="space-y-4 text-sm">
+          <p className="text-slate-600">
+            {deletingSub?.status === 'draft'
+              ? 'An unbilled draft with no invoices can be permanently deleted.'
+              : 'This subscription and any billing history will be retained. The system will cancel or close it instead.'}
+          </p>
+          <div className="flex justify-end gap-2 border-t border-slate-200 pt-4">
+            <button
+              type="button"
+              onClick={() => setDeletingSub(null)}
+              className="rounded-lg border border-slate-300 px-4 py-2 text-[#252B2E]"
+            >
+              Keep Subscription
+            </button>
+            <button
+              type="button"
+              onClick={handleDeleteSubscription}
+              className="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 font-semibold text-white hover:bg-rose-700"
+            >
+              <Trash2 className="h-4 w-4" />
+              Confirm
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Subscription Detail Modal */}
       {selectedSub && (
@@ -466,7 +991,7 @@ export const SubscriptionManagement: React.FC = () => {
                   value={pauseReason}
                   onChange={(e) => setPauseReason(e.target.value)}
                   placeholder="e.g. Seasonal ERP system migration"
-                  className="w-full bg-[#0E131F] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
                 />
               </div>
             )}

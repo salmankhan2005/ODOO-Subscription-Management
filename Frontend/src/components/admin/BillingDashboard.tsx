@@ -1,45 +1,45 @@
 import React, { useState, useEffect } from 'react';
-import { billingApi, subscriptionApi } from '../../api/services';
-import { BillingRun, DunningEvent, Subscription } from '../../types';
+import axios from 'axios';
+import { billingApi } from '../../api/services';
+import { BillingRun, Subscription } from '../../types';
 import { BentoCard } from '../common/BentoCard';
 import { StatusBadge } from '../common/StatusBadge';
 import { Modal } from '../common/Modal';
 import { useToast } from '../../context/ToastContext';
 import {
   Zap,
-  Play,
   RotateCw,
-  CheckCircle2,
-  AlertTriangle,
-  Clock,
-  ShieldAlert,
-  ArrowRight,
-  RefreshCw,
-  Server
 } from 'lucide-react';
 
 export const BillingDashboard: React.FC = () => {
   const [billingRuns, setBillingRuns] = useState<BillingRun[]>([]);
-  const [dunningEvents, setDunningEvents] = useState<DunningEvent[]>([]);
   const [dueSubscriptions, setDueSubscriptions] = useState<Subscription[]>([]);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-
-  // Animated batch execution state
   const [isRunningBatch, setIsRunningBatch] = useState(false);
-  const [batchProgress, setBatchProgress] = useState(0);
-  const [batchStage, setBatchStage] = useState('');
 
   const { showToast } = useToast();
 
   const loadData = async () => {
-    const runsRes = await billingApi.getRuns();
-    if (runsRes.success) setBillingRuns(runsRes.data);
-
-    const dunRes = await billingApi.getDunningEvents();
-    if (dunRes.success) setDunningEvents(dunRes.data);
-
-    const dueRes = await billingApi.previewDueSubscriptions();
-    if (dueRes.success) setDueSubscriptions(dueRes.data);
+    try {
+      const [runsRes, dueRes] = await Promise.all([
+        billingApi.getRuns(),
+        billingApi.preview(),
+      ]);
+      if (runsRes.success) setBillingRuns(runsRes.data || []);
+      if (dueRes.success) setDueSubscriptions(dueRes.data || []);
+    } catch (error) {
+      const responseMessage = axios.isAxiosError(error) &&
+        error.response?.data &&
+        typeof error.response.data === 'object' &&
+        'message' in error.response.data &&
+        typeof error.response.data.message === 'string'
+        ? error.response.data.message
+        : undefined;
+      showToast('Unable to load billing data', {
+        type: 'error',
+        message: responseMessage || (error instanceof Error ? error.message : 'Please try again.'),
+      });
+    }
   };
 
   useEffect(() => {
@@ -48,40 +48,31 @@ export const BillingDashboard: React.FC = () => {
 
   const handleRunBillingBatch = async () => {
     setIsRunningBatch(true);
-    setBatchProgress(10);
-    setBatchStage('Aggregating active recurring subscriptions...');
-
-    setTimeout(() => {
-      setBatchProgress(40);
-      setBatchStage('Applying statutory 18% tax rules & verified discounts...');
-    }, 500);
-
-    setTimeout(() => {
-      setBatchProgress(75);
-      setBatchStage('Generating synchronized invoice numbers & dispatching webhooks...');
-    }, 1100);
-
-    setTimeout(async () => {
-      setBatchProgress(100);
-      setBatchStage('Batch finalized.');
-      const res = await billingApi.runBillingBatch();
-      setIsRunningBatch(false);
+    try {
+      const res = await billingApi.runBilling();
       if (res.success) {
         showToast(res.message || 'Billing batch executed successfully', { type: 'success' });
-        loadData();
+        await loadData();
       }
-    }, 1800);
-  };
-
-  const handleRetryDunning = async (d: DunningEvent) => {
-    const res = await billingApi.retryDunning(d.id);
-    if (res.success) {
-      showToast(`Recovered $${d.amount} on ${d.invoiceNumber} via fallback rail!`);
-      loadData();
+    } catch (error) {
+      const responseMessage = axios.isAxiosError(error) &&
+        error.response?.data &&
+        typeof error.response.data === 'object' &&
+        'message' in error.response.data &&
+        typeof error.response.data.message === 'string'
+        ? error.response.data.message
+        : undefined;
+      showToast('Billing run failed', {
+        type: 'error',
+        message: responseMessage || (error instanceof Error ? error.message : 'Please try again.'),
+      });
+    } finally {
+      setIsRunningBatch(false);
     }
   };
 
   const totalDueAmount = dueSubscriptions.reduce((acc, s) => acc + s.totalAmount, 0);
+  const latestRun = billingRuns[0];
 
   return (
     <div className="space-y-6">
@@ -123,25 +114,6 @@ export const BillingDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Live Animated Batch Progress Banner if running */}
-      {isRunningBatch && (
-        <div className="p-4 rounded-2xl bg-indigo-950/60 border border-indigo-500/50 space-y-2 animate-in fade-in duration-150">
-          <div className="flex justify-between items-center text-xs">
-            <span className="font-semibold text-indigo-200 flex items-center gap-2">
-              <RotateCw className="w-4 h-4 text-indigo-400 animate-spin" />
-              <span>{batchStage}</span>
-            </span>
-            <span className="font-mono text-indigo-300 font-bold">{batchProgress}%</span>
-          </div>
-          <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-            <div
-              style={{ width: `${batchProgress}%` }}
-              className="h-full bg-gradient-to-r from-indigo-500 to-cyan-400 transition-all duration-300 rounded-full"
-            />
-          </div>
-        </div>
-      )}
-
       {/* KPI Bento Row */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <BentoCard glow className="p-4">
@@ -151,89 +123,38 @@ export const BillingDashboard: React.FC = () => {
         </BentoCard>
 
         <BentoCard glow className="p-4">
-          <div className="text-xs text-slate-400">Total Invoices Dispatched</div>
-          <div className="text-2xl font-bold font-mono text-emerald-400 mt-1">100%</div>
-          <div className="text-[11px] text-slate-400 mt-0.5">Zero manual spreadsheet entry</div>
+          <div className="text-xs text-slate-400">Billing Runs Recorded</div>
+          <div className="text-2xl font-bold font-mono text-white mt-1">{billingRuns.length}</div>
+          <div className="text-[11px] text-slate-400 mt-0.5">Most recent runs</div>
         </BentoCard>
 
         <BentoCard glow className="p-4">
-          <div className="text-xs text-slate-400">Active Dunning Retries</div>
-          <div className="text-2xl font-bold font-mono text-amber-300 mt-1">
-            {dunningEvents.filter((e) => e.status !== 'recovered').length}
+          <div className="text-xs text-slate-400">Latest Run Successful</div>
+          <div className="text-2xl font-bold font-mono text-emerald-400 mt-1">
+            {latestRun?.successful ?? 0}
           </div>
-          <div className="text-[11px] text-slate-400 mt-0.5">Automatic cascading fallbacks</div>
+          <div className="text-[11px] text-slate-400 mt-0.5">Invoices created</div>
         </BentoCard>
 
         <BentoCard glow className="p-4">
-          <div className="text-xs text-slate-400">Autonomous Recovery Rate</div>
-          <div className="text-2xl font-bold font-mono text-cyan-300 mt-1">94.8%</div>
-          <div className="text-[11px] text-slate-400 mt-0.5">Neural timing optimization</div>
+          <div className="text-xs text-slate-400">Latest Run Failed</div>
+          <div className="text-2xl font-bold font-mono text-amber-400 mt-1">
+            {latestRun?.failed ?? 0}
+          </div>
+          <div className="text-[11px] text-slate-400 mt-0.5">Items needing attention</div>
         </BentoCard>
       </div>
 
-      {/* Main Studio Split: AI Dunning Events & Billing History */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* Left: AI Dunning Recovery Studio */}
-        <BentoCard
-          title="Smart Dunning & Revenue Recovery Studio"
-          subtitle="Intelligent retry orchestrator preventing involuntary subscriber churn"
-          className="lg:col-span-7"
-        >
-          <div className="space-y-3 mt-2">
-            {dunningEvents.map((evt) => (
-              <div
-                key={evt.id}
-                className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-3"
-              >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-2.5">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-sm font-bold text-white">{evt.invoiceNumber}</span>
-                      <span className="text-xs text-slate-300">· {evt.customerName}</span>
-                    </div>
-                    <div className="text-[11px] text-rose-400 mt-0.5">{evt.lastFailureReason}</div>
-                  </div>
-                  <div className="flex items-center gap-3 self-end sm:self-auto">
-                    <span className="font-mono text-sm font-bold text-slate-100">${evt.amount}</span>
-                    <StatusBadge status={evt.status} />
-                  </div>
-                </div>
-
-                <div className="text-xs text-slate-300 flex items-start gap-2 bg-slate-950/40 p-2.5 rounded-lg border border-slate-800/60">
-                  <Server className="w-3.5 h-3.5 text-indigo-400 shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-semibold text-slate-200">Autonomous Strategy: </span>
-                    <span>{evt.recoveryStrategy}</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between text-xs pt-1">
-                  <span className="text-slate-400 font-mono text-[11px]">
-                    Attempt {evt.attemptNumber} of {evt.maxAttempts} · Next scheduled: {evt.nextRetryDate}
-                  </span>
-
-                  {evt.status !== 'recovered' && (
-                    <button
-                      onClick={() => handleRetryDunning(evt)}
-                      className="px-3 py-1.5 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/40 font-semibold text-xs transition-colors flex items-center gap-1.5"
-                    >
-                      <RotateCw className="w-3 h-3" />
-                      <span>Trigger Alternate Rail</span>
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </BentoCard>
-
-        {/* Right: Automated Billing Runs Log */}
+      <div className="grid grid-cols-1 gap-5">
         <BentoCard
           title="Automated Billing Run Ledger"
           subtitle="Audit log of batch billing executions and processed totals"
-          className="lg:col-span-5"
+          className="lg:col-span-12"
         >
           <div className="space-y-3 mt-2">
+            {billingRuns.length === 0 && (
+              <p className="py-6 text-center text-sm text-slate-500">No billing runs have been recorded.</p>
+            )}
             {billingRuns.map((run) => (
               <div
                 key={run.id}
