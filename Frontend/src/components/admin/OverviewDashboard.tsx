@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { reportApi, subscriptionApi, invoiceApi, customerApi } from '../../api/services';
+import { reportApi, subscriptionApi, invoiceApi, customerApi, dashboardApi } from '../../api/services';
+import { useAuth } from '../../context/AuthContext';
 import { BentoCard } from '../common/BentoCard';
 import { StatusBadge } from '../common/StatusBadge';
 import {
@@ -21,16 +22,17 @@ interface OverviewDashboardProps {
 }
 
 export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({ onNavigate }) => {
+  const { role } = useAuth();
   const [metrics, setMetrics] = useState({
-    mrr: 94820,
-    arr: 1137840,
-    activeSubscriptionsCount: 42,
-    totalCustomersCount: 18,
-    totalCollected: 268400,
-    totalOutstanding: 2410,
-    overdueCount: 1,
-    overdueAmount: 1760,
-    upcomingRenewalsCount: 5
+    mrr: 0,
+    arr: 0,
+    activeSubscriptionsCount: 0,
+    totalCustomersCount: 0,
+    totalCollected: 0,
+    totalOutstanding: 0,
+    overdueCount: 0,
+    overdueAmount: 0,
+    upcomingRenewalsCount: 0
   });
 
   const [recentSubscriptions, setRecentSubscriptions] = useState<Subscription[]>([]);
@@ -39,22 +41,58 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({ onNavigate
 
   useEffect(() => {
     const loadData = async () => {
-      const summaryRes = await reportApi.getFinancialSummary();
-      if (summaryRes.success && summaryRes.data) {
-        setMetrics(summaryRes.data);
+      if (role === 'admin') {
+        const summaryRes = await reportApi.getFinancialSummary();
+        if (summaryRes.success && summaryRes.data) {
+          setMetrics((current) => ({
+            ...current,
+            mrr: summaryRes.data.mrr,
+            arr: summaryRes.data.arr,
+            totalCollected: summaryRes.data.total_collected,
+            totalOutstanding: summaryRes.data.total_outstanding,
+          }));
+        }
+      } else {
+        const summaryRes = await dashboardApi.getStaffDashboard();
+        if (summaryRes.success && summaryRes.data) {
+          setMetrics((current) => ({
+            ...current,
+            activeSubscriptionsCount: summaryRes.data.active_subscriptions,
+            totalCustomersCount: summaryRes.data.total_customers,
+            overdueCount: summaryRes.data.overdue_invoices,
+            upcomingRenewalsCount: summaryRes.data.upcoming_renewals,
+          }));
+        }
       }
       const subsRes = await subscriptionApi.getAll();
-      if (subsRes.success) setRecentSubscriptions(subsRes.data.slice(0, 5));
+      if (subsRes.success) {
+        setRecentSubscriptions(subsRes.data.slice(0, 5));
+        setMetrics((current) => ({
+          ...current,
+          activeSubscriptionsCount: subsRes.data.filter((subscription) => subscription.status === 'active').length,
+        }));
+      }
 
       const invsRes = await invoiceApi.getAll();
-      if (invsRes.success) setRecentInvoices(invsRes.data.slice(0, 5));
+      if (invsRes.success) {
+        setRecentInvoices(invsRes.data.slice(0, 5));
+        const overdueInvoices = invsRes.data.filter((invoice) => invoice.status === 'overdue');
+        setMetrics((current) => ({
+          ...current,
+          overdueCount: overdueInvoices.length,
+          overdueAmount: overdueInvoices.reduce((total, invoice) => total + invoice.outstandingBalance, 0),
+        }));
+      }
 
       const custRes = await customerApi.getAll();
-      if (custRes.success) setCustomers(custRes.data);
+      if (custRes.success) {
+        setCustomers(custRes.data);
+        setMetrics((current) => ({ ...current, totalCustomersCount: custRes.data.length }));
+      }
     };
 
     loadData();
-  }, []);
+  }, [role]);
 
   return (
     <div className="space-y-6">

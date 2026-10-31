@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { portalApi, subscriptionApi } from '../../api/services';
+import { portalApi } from '../../api/services';
 import { Customer, Subscription, Invoice, Payment, SubscriptionPlan } from '../../types';
 import { BentoCard } from '../common/BentoCard';
 import { StatusBadge } from '../common/StatusBadge';
@@ -26,7 +26,7 @@ interface CustomerPortalProps {
 
 export const CustomerPortal: React.FC<CustomerPortalProps> = ({ initialTab = 'customer_overview' }) => {
   const { user } = useAuth();
-  const customerId = user?.customerId || 'cust_1';
+  const customerId = user?.customerId;
 
   const [portalTab, setPortalTab] = useState<'overview' | 'plans' | 'invoices' | 'payments' | 'profile'>('overview');
   const [customer, setCustomer] = useState<Customer | null>(null);
@@ -41,7 +41,8 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ initialTab = 'cu
   const { showToast } = useToast();
 
   const loadPortalData = async () => {
-    const res = await portalApi.getCustomerData(customerId);
+    if (!customerId) return;
+    const res = await portalApi.getCustomerData();
     if (res.success && res.data) {
       setCustomer(res.data.customer || null);
       setSubscriptions(res.data.subscriptions || []);
@@ -64,17 +65,17 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ initialTab = 'cu
   }, [initialTab]);
 
   const handleRequestPause = async (s: Subscription) => {
-    const res = await subscriptionApi.updateStatus(s.id, 'paused', 'Customer self-service portal pause');
+    const res = await portalApi.requestPause(s.id);
     if (res.success) {
-      showToast(`Subscription ${s.subscriptionNumber} paused as requested`);
+      showToast('Pause request submitted');
       loadPortalData();
     }
   };
 
-  const handleRequestResume = async (s: Subscription) => {
-    const res = await subscriptionApi.updateStatus(s.id, 'active');
+  const handleRequestRenew = async (s: Subscription) => {
+    const res = await portalApi.requestRenew(s.id);
     if (res.success) {
-      showToast(`Subscription ${s.subscriptionNumber} resumed`);
+      showToast('Renewal request submitted');
       loadPortalData();
     }
   };
@@ -202,10 +203,10 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ initialTab = 'cu
                         </button>
                       ) : (
                         <button
-                          onClick={() => handleRequestResume(s)}
+                          onClick={() => handleRequestRenew(s)}
                           className="px-3 py-1.5 rounded-lg bg-emerald-950/40 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-800/60 font-medium text-xs transition-colors"
                         >
-                          Resume Subscription
+                          Request Renewal
                         </button>
                       )}
                     </div>

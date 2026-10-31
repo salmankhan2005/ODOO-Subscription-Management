@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
 import { BentoCard } from '../common/BentoCard';
 import {
   Zap,
@@ -13,9 +12,13 @@ import {
   Receipt,
   Users
 } from 'lucide-react';
+import { UserRole } from '../../types';
 
-export const ShowcaseLanding: React.FC = () => {
-  const { setAppMode, switchRole } = useAuth();
+interface ShowcaseLandingProps {
+  onLaunch: (role: UserRole) => void;
+}
+
+export const ShowcaseLanding: React.FC<ShowcaseLandingProps> = ({ onLaunch }) => {
 
   // Interactive Variant Pricing Calculator State
   const [selectedVariant, setSelectedVariant] = useState<'std' | 'odoo' | 'ent'>('odoo');
@@ -47,11 +50,6 @@ export const ShowcaseLanding: React.FC = () => {
     }, 1800);
   };
 
-  const launchWithRole = (role: 'admin' | 'staff' | 'customer') => {
-    switchRole(role);
-    setAppMode('workspace');
-  };
-
   return (
     <div className="min-h-screen bg-[#0B0F17] text-slate-100 pb-24">
       {/* Hero Section */}
@@ -78,7 +76,7 @@ export const ShowcaseLanding: React.FC = () => {
           {/* Quick Launch Buttons */}
           <div className="pt-4 flex flex-wrap items-center justify-center gap-3">
             <button
-              onClick={() => launchWithRole('admin')}
+              onClick={() => onLaunch('admin')}
               className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-all shadow-lg shadow-indigo-600/30"
             >
               <ShieldCheck className="w-4 h-4" />
@@ -86,14 +84,14 @@ export const ShowcaseLanding: React.FC = () => {
               <ArrowRight className="w-4 h-4 ml-1" />
             </button>
             <button
-              onClick={() => launchWithRole('staff')}
+              onClick={() => onLaunch('staff')}
               className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-slate-200 font-semibold text-sm transition-all"
             >
               <Users className="w-4 h-4 text-emerald-400" />
               <span>Staff / Sales View</span>
             </button>
             <button
-              onClick={() => launchWithRole('customer')}
+              onClick={() => onLaunch('customer')}
               className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-slate-200 font-semibold text-sm transition-all"
             >
               <Repeat className="w-4 h-4 text-amber-400" />
@@ -448,7 +446,7 @@ export const ShowcaseLanding: React.FC = () => {
                 </div>
 
                 <button
-                  onClick={() => launchWithRole('admin')}
+                  onClick={() => onLaunch('admin')}
                   className="w-full py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-all shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2"
                 >
                   <span>Build Quote in Application</span>
