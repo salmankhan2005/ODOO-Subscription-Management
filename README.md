@@ -26,6 +26,68 @@ Brightloop is a subscription-management application with separate Admin, Staff, 
 
 The landing page lets a user launch a role-specific workspace. The selected role is checked against the signed-in account; selecting a portal does not grant that role. The API independently enforces authentication, role authorization, and customer ownership.
 
+## Screenshots
+
+Brightloop's landing page introduces the subscription billing and revenue recovery workflows.
+
+<p align="center">
+  <img src="docs/screenshots/01-landing-page.png" alt="Brightloop landing page and billing architecture overview" width="100%">
+</p>
+
+<details>
+<summary>Sign-in screens</summary>
+
+<p><img src="docs/screenshots/07-customer-sign-in.png" alt="Customer sign-in screen" width="100%"></p>
+<p><img src="docs/screenshots/08-staff-sign-in.png" alt="Staff sign-in screen" width="100%"></p>
+
+</details>
+
+<details>
+<summary>Customer portal</summary>
+
+<p><img src="docs/screenshots/02-customer-available-plans.png" alt="Customer portal with available subscription plans" width="100%"></p>
+<p><img src="docs/screenshots/03-customer-livekit-assistant.png" alt="Customer portal with the LiveKit voice support assistant" width="100%"></p>
+<p><img src="docs/screenshots/04-customer-purchase-plan.png" alt="Plan purchase and manual payment details dialog" width="100%"></p>
+<p><img src="docs/screenshots/05-customer-subscriptions.png" alt="Customer subscriptions and renewal information" width="100%"></p>
+<p><img src="docs/screenshots/06-customer-profile-billing.png" alt="Customer organization profile and billing information" width="100%"></p>
+
+</details>
+
+<details>
+<summary>Staff workspace</summary>
+
+<p><img src="docs/screenshots/09-staff-dashboard.png" alt="Staff business dashboard" width="100%"></p>
+<p><img src="docs/screenshots/10-staff-customers.png" alt="Staff customer management screen" width="100%"></p>
+<p><img src="docs/screenshots/11-staff-plans-cadences.png" alt="Staff subscription plans and cadences" width="100%"></p>
+<p><img src="docs/screenshots/12-staff-quotation-wizard.png" alt="Staff quotation creation wizard" width="100%"></p>
+<p><img src="docs/screenshots/13-staff-subscriptions.png" alt="Staff subscription lifecycle screen" width="100%"></p>
+<p><img src="docs/screenshots/14-staff-invoices.png" alt="Staff invoice management screen" width="100%"></p>
+<p><img src="docs/screenshots/15-staff-payments.png" alt="Staff payment transactions screen" width="100%"></p>
+<p><img src="docs/screenshots/16-staff-revenue-report.png" alt="Staff revenue report" width="100%"></p>
+<p><img src="docs/screenshots/17-staff-report-print-preview.png" alt="Print preview for a staff revenue report" width="100%"></p>
+
+</details>
+
+<details>
+<summary>Admin workspace</summary>
+
+<p><img src="docs/screenshots/18-admin-dashboard.png" alt="Admin business dashboard" width="100%"></p>
+<p><img src="docs/screenshots/19-admin-dashboard-detail.png" alt="Admin dashboard with subscription and invoice summaries" width="100%"></p>
+<p><img src="docs/screenshots/20-admin-customers.png" alt="Admin customer management screen" width="100%"></p>
+<p><img src="docs/screenshots/21-admin-products-variants.png" alt="Admin product catalog and variants" width="100%"></p>
+<p><img src="docs/screenshots/22-admin-plans-cadences.png" alt="Admin subscription plans and cadences" width="100%"></p>
+<p><img src="docs/screenshots/23-admin-quotations.png" alt="Admin quotation management screen" width="100%"></p>
+<p><img src="docs/screenshots/24-admin-subscriptions.png" alt="Admin subscription lifecycle screen" width="100%"></p>
+<p><img src="docs/screenshots/25-admin-invoices.png" alt="Admin invoice management screen" width="100%"></p>
+<p><img src="docs/screenshots/26-admin-payments.png" alt="Admin payment transactions screen" width="100%"></p>
+<p><img src="docs/screenshots/27-admin-ai-billing-dunning.png" alt="Admin AI billing and dunning workspace" width="100%"></p>
+<p><img src="docs/screenshots/28-admin-taxes-discounts.png" alt="Admin tax and discount pricing simulator" width="100%"></p>
+<p><img src="docs/screenshots/29-admin-tax-rules.png" alt="Admin tax rules screen" width="100%"></p>
+<p><img src="docs/screenshots/30-admin-revenue-reports.png" alt="Admin revenue reporting screen" width="100%"></p>
+<p><img src="docs/screenshots/31-admin-add-staff.png" alt="Admin form for creating a staff account" width="100%"></p>
+
+</details>
+
 ## Architecture
 
 ```text
