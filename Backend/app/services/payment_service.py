@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 VALID_METHODS = {'Cash', 'Bank Transfer', 'UPI', 'Card', 'Cheque', 'Other'}
 VALID_STATUSES = {'pending', 'completed', 'failed', 'refunded'}
+PAYMENT_SELECT = '*, customers(name, email), payment_allocations(invoice_id, invoices(invoice_number))'
 
 
 def _generate_payment_ref() -> str:
@@ -26,9 +27,7 @@ def _generate_payment_ref() -> str:
 
 def list_payments(customer_id: str = None, page: int = 1, per_page: int = 20):
     try:
-        query = supabase_admin.table('payments').select(
-            '*, customers(name, email)', count='exact'
-        )
+        query = supabase_admin.table('payments').select(PAYMENT_SELECT, count='exact')
         if customer_id:
             query = query.eq('customer_id', customer_id)
         query = query.order('created_at', desc=True)
@@ -41,7 +40,7 @@ def list_payments(customer_id: str = None, page: int = 1, per_page: int = 20):
 
 def get_payment(payment_id: str):
     try:
-        resp = supabase_admin.table('payments').select('*').eq('id', payment_id).single().execute()
+        resp = supabase_admin.table('payments').select(PAYMENT_SELECT).eq('id', payment_id).single().execute()
         return resp.data, None
     except Exception:
         return None, 'Payment not found'
