@@ -42,6 +42,16 @@ Edit `.env` and fill in:
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase Dashboard → Settings → API → service_role secret key |
 | `SECRET_KEY` | Any long random string |
 | `BILLING_SECRET` | Any long random string (shared with your cron scheduler) |
+| `STRIPE_SECRET_KEY` | Stripe Dashboard > Developers > API keys (use a test key while developing) |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook endpoint signing secret |
+| `STRIPE_CURRENCY` | Three-letter Stripe-supported currency, lowercase (default `usd`) |
+| `FRONTEND_URL` | Browser URL for the customer portal checkout return |
+
+For payment reconciliation, register a Stripe webhook at
+`/api/v1/portal/payments/stripe/webhook` for `checkout.session.completed` and
+`checkout.session.async_payment_succeeded`, then set its signing secret as
+`STRIPE_WEBHOOK_SECRET`. The customer return page also confirms the session, so
+the subscription and paid invoice appear immediately after checkout.
 
 > ⚠️ **Never** commit `.env` or expose `SUPABASE_SERVICE_ROLE_KEY` to the frontend.
 
@@ -135,7 +145,16 @@ Error:
 | POST | `/billing/run` | Admin / Billing Secret | Run billing cycle |
 | GET | `/invoices/{id}/pdf` | Admin/Staff | Download PDF |
 | GET | `/portal/subscriptions` | Customer | Own subscriptions |
+| GET | `/portal/recommendations` | Customer | Rank available plans by customer adoption and billing preferences; includes model-based alternatives for existing subscribers |
 | GET | `/dashboard/admin` | Admin | Admin dashboard |
+
+---
+
+## Plan Recommendations
+
+The customer portal ranks currently available plans using historical subscription selections and the signed-in customer's prior billing cadence where available. Popularity counts use completed subscription lifecycle records and are loaded in pages. New customers receive popularity-based recommendations until they have subscription history.
+
+Existing customers may also receive alternative-plan suggestions from `subscription_optimizer_model.pkl`. The model is loaded lazily from the `Backend` directory and must be a trusted artifact compatible with scikit-learn 1.8.0. It expects the 17 named features encoded in `app/services/recommendation_service.py`; utilization, feature-overlap, capacity, and cancellation-fee data are not stored in the current schema, so those inputs are passed as missing values for the model's trained imputer. Install the pinned runtime with `pip install -r requirements.txt`.
 
 ---
 

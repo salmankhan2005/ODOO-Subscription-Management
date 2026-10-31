@@ -161,23 +161,6 @@ export const ReportsAnalytics: React.FC = () => {
               <div className="text-[11px] text-rose-400/80 mt-1">{overdueInvoices.length} account requiring dunning</div>
             </BentoCard>
           </div>
-
-          <BentoCard title="Audited Inflows by Payment Rail">
-            <div className="space-y-3 mt-2 text-xs">
-              <div className="flex justify-between items-center p-3 rounded-lg bg-slate-900/60 border border-slate-800">
-                <span className="text-slate-200 font-medium">Stripe Credit & Debit Cards</span>
-                <span className="font-mono text-emerald-400 font-semibold">$192,400 (71.7%)</span>
-              </div>
-              <div className="flex justify-between items-center p-3 rounded-lg bg-slate-900/60 border border-slate-800">
-                <span className="text-slate-200 font-medium">ACH / Bank Wire Transfers</span>
-                <span className="font-mono text-emerald-400 font-semibold">$54,800 (20.4%)</span>
-              </div>
-              <div className="flex justify-between items-center p-3 rounded-lg bg-slate-900/60 border border-slate-800">
-                <span className="text-slate-200 font-medium">UPI & Alternate Rails</span>
-                <span className="font-mono text-emerald-400 font-semibold">$21,200 (7.9%)</span>
-              </div>
-            </div>
-          </BentoCard>
         </div>
       )}
 

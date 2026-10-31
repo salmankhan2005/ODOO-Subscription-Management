@@ -2,6 +2,9 @@
 
 import logging
 from datetime import date
+from decimal import Decimal, ROUND_HALF_UP
+
+from flask import current_app
 
 from app.extensions import supabase_admin
 from app.services import invoice_service
@@ -12,6 +15,177 @@ from app.utils.pricing import calculate_line_totals
 logger = logging.getLogger(__name__)
 
 MANUAL_PAYMENT_METHODS = {'Cash', 'Bank Transfer', 'Cheque', 'Other'}
+
+
+def create_stripe_checkout(customer_id: str, actor_id: str, plan_id: str, data: dict):
+    """Create a hosted Stripe Checkout session for a customer plan purchase."""
+    secret_key = current_app.config.get('STRIPE_SECRET_KEY')
+    if not secret_key:
+        return None, 'Stripe payments are not configured'
+    import stripe
+
+    try:
+        quantity = int(data.get('quantity', 0))
+    except (TypeError, ValueError):
+        return None, 'Quantity must be a whole number'
+    if quantity < 1 or quantity > 10000:
+        return None, 'Quantity must be between 1 and 10000'
+
+    address = (data.get('billing_address') or '').strip()
+    country = (data.get('country') or '').strip()
+    phone = (data.get('phone') or '').strip()
+    notes = (data.get('notes') or '').strip()
+    if not address or not country:
+        return None, 'Billing address and country are required'
+    if any(len(value) > limit for value, limit in ((address, 500), (country, 100), (phone, 40), (notes, 500))):
+        return None, 'Billing details exceed the allowed length'
+
+    try:
+        today_str = date.today().isoformat()
+        plan_response = (
+            supabase_admin.table('subscription_plans').select('*').eq('id', plan_id)
+            .eq('status', 'active').single().execute()
+        )
+        plan = plan_response.data
+        if not plan or (plan.get('start_date') and plan['start_date'] > today_str) or (
+            plan.get('end_date') and plan['end_date'] < today_str
+        ):
+            return None, 'This plan is not available for purchase'
+        minimum_quantity = int(plan.get('minimum_quantity') or 1)
+        if quantity < minimum_quantity:
+            return None, f'Quantity must be at least {minimum_quantity}'
+
+        customer_response = (
+            supabase_admin.table('customers').select('*').eq('id', customer_id).single().execute()
+        )
+        customer = customer_response.data
+        if not customer or customer.get('status') != 'active':
+            return None, 'An active customer profile is required to purchase a plan'
+
+        product_id = plan.get('product_id')
+        tax_response = (
+            supabase_admin.table('tax_rules')
+            .select('percentage, applicable_product_ids, start_date, end_date')
+            .eq('status', 'active').lte('start_date', today_str).execute()
+        )
+        tax_rate = sum(
+            float(rule.get('percentage') or 0)
+            for rule in (tax_response.data or [])
+            if (not rule.get('end_date') or rule['end_date'] >= today_str)
+            and (not rule.get('applicable_product_ids') or not product_id
+                 or product_id in rule['applicable_product_ids'])
+        )
+        totals = calculate_line_totals(float(plan['base_price']), quantity, tax_rate)
+        amount_cents = int(
+            (Decimal(str(totals['line_total'])) * 100).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
+        )
+        currency = current_app.config.get('STRIPE_CURRENCY', 'usd').lower()
+        frontend_url = current_app.config['FRONTEND_URL'].rstrip('/')
+        success_url = f'{frontend_url}/?stripe_session_id={{CHECKOUT_SESSION_ID}}'
+        cancel_url = f'{frontend_url}/?stripe_cancelled=1'
+
+        stripe.api_key = secret_key
+        session = stripe.checkout.Session.create(
+            mode='payment',
+            line_items=[{
+                'price_data': {
+                    'currency': currency,
+                    'unit_amount': amount_cents,
+                    'product_data': {'name': f"{plan.get('name', 'Subscription plan')} (quantity {quantity})"},
+                },
+                'quantity': 1,
+            }],
+            client_reference_id=customer_id,
+            customer_email=customer.get('email') or None,
+            metadata={
+                'customer_id': customer_id,
+                'plan_id': plan_id,
+                'quantity': str(quantity),
+                'actor_id': actor_id,
+                'billing_address': address,
+                'country': country,
+                'phone': phone,
+                'notes': notes,
+                'expected_total_cents': str(amount_cents),
+                'unit_price': str(plan['base_price']),
+                'tax_rate': str(tax_rate),
+            },
+            success_url=success_url,
+            cancel_url=cancel_url,
+        )
+        return {'checkout_url': session.url}, None
+    except stripe.StripeError as error:
+        logger.exception('Could not create Stripe Checkout session: %s', error)
+        return None, 'Could not start secure checkout. Please try again.'
+    except Exception as error:
+        logger.exception('Could not create Stripe Checkout session: %s', error)
+        return None, 'Could not start secure checkout. Please try again.'
+
+
+def complete_stripe_checkout(session_id: str, actor_id: str | None = None):
+    """Verify a Stripe session and create the paid subscription records once."""
+    secret_key = current_app.config.get('STRIPE_SECRET_KEY')
+    if not secret_key:
+        return None, 'Stripe payments are not configured'
+    import stripe
+    if not session_id or len(session_id) > 255:
+        return None, 'A valid Stripe checkout session is required'
+    try:
+        stripe.api_key = secret_key
+        session = stripe.checkout.Session.retrieve(session_id)
+        session_data = session if isinstance(session, dict) else session.to_dict_recursive()
+        metadata = session_data.get('metadata') or {}
+        customer_id = metadata.get('customer_id')
+        if session_data.get('payment_status') != 'paid' or not customer_id:
+            return None, 'Stripe has not confirmed this payment'
+        if session_data.get('client_reference_id') != customer_id:
+            return None, 'Payment customer could not be verified'
+        if actor_id and actor_id != metadata.get('actor_id'):
+            # actor_id metadata is set when the session is created; older sessions
+            # without it are still tied to the authenticated customer below.
+            if metadata.get('actor_id'):
+                return None, 'Payment session does not belong to this user'
+
+        existing = (
+            supabase_admin.table('payments').select('id').eq(
+                'transaction_reference', session_id
+            ).execute()
+        )
+        if existing.data:
+            return {'already_processed': True}, None
+
+        expected_cents = int(metadata.get('expected_total_cents') or 0)
+        if int(session_data.get('amount_total') or 0) != expected_cents:
+            return None, 'Stripe payment amount does not match the checkout amount'
+        purchase_data = {
+            'quantity': int(metadata.get('quantity') or 0),
+            'payment_method': 'Card',
+            'transaction_reference': session_id,
+            'billing_address': metadata.get('billing_address', ''),
+            'country': metadata.get('country', ''),
+            'phone': metadata.get('phone', ''),
+            'notes': metadata.get('notes', ''),
+        }
+        result, error = purchase_plan(
+            customer_id=customer_id,
+            actor_id=actor_id or metadata.get('actor_id') or customer_id,
+            plan_id=metadata.get('plan_id'),
+            data=purchase_data,
+            stripe_payment={
+                'unit_price': metadata.get('unit_price'),
+                'tax_rate': metadata.get('tax_rate'),
+                'total_amount': expected_cents / 100,
+            },
+        )
+        if error:
+            return None, error
+        return result, None
+    except stripe.StripeError as error:
+        logger.exception('Could not verify Stripe Checkout session: %s', error)
+        return None, 'Could not verify payment with Stripe'
+    except Exception as error:
+        logger.exception('Could not complete Stripe Checkout session: %s', error)
+        return None, 'Could not complete payment. Please contact support.'
 
 
 def _next_number(sequence: str, prefix: str, width: int) -> str:
@@ -41,10 +215,16 @@ def _rollback_purchase(subscription_id=None, invoice_id=None, payment_id=None):
         logger.exception('Could not fully roll back failed customer plan purchase')
 
 
-def purchase_plan(customer_id: str, actor_id: str, plan_id: str, data: dict):
-    """Create an active subscription and invoice paid through a manually recorded method."""
-    payment_method = data.get('payment_method')
-    if payment_method not in MANUAL_PAYMENT_METHODS or payment_method not in VALID_METHODS:
+def purchase_plan(
+    customer_id: str, actor_id: str, plan_id: str, data: dict,
+    stripe_payment: dict = None,
+):
+    """Create an active subscription and paid invoice after a settled payment."""
+    payment_method = 'Card' if stripe_payment else data.get('payment_method')
+    verified_stripe_payment = stripe_payment is not None
+    if not verified_stripe_payment and (
+        payment_method not in MANUAL_PAYMENT_METHODS or payment_method not in VALID_METHODS
+    ):
         return None, 'Choose a supported manual payment method'
 
     try:
@@ -135,7 +315,13 @@ def purchase_plan(customer_id: str, actor_id: str, plan_id: str, data: dict):
             )
         )
 
-        unit_price = float(plan['base_price'])
+        unit_price = float(stripe_payment['unit_price'] if stripe_payment else plan['base_price'])
+        if stripe_payment:
+            tax_rate = float(stripe_payment.get('tax_rate') or 0)
+            line_totals = calculate_line_totals(unit_price, quantity, tax_rate)
+            expected_total = float(stripe_payment.get('total_amount') or 0)
+            if abs(line_totals['line_total'] - expected_total) > 0.01:
+                raise RuntimeError('Stripe checkout total does not match the payment amount')
         line_totals = calculate_line_totals(unit_price, quantity, tax_rate)
         interval = plan['billing_interval']
         interval_count = int(plan.get('interval_count') or 1)

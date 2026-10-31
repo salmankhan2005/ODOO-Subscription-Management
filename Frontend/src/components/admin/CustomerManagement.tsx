@@ -15,13 +15,26 @@ import {
   Phone,
   Building,
   MapPin,
-  FileText
+  FileText,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 
 export const CustomerManagement: React.FC = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(20);
+  const [pagination, setPagination] = useState<{
+    page: number;
+    per_page: number;
+    total: number;
+    total_pages: number;
+    has_next: boolean;
+    has_prev: boolean;
+  } | null>(null);
+  const [isLoadingCustomers, setIsLoadingCustomers] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [detailCustomer, setDetailCustomer] = useState<Customer | null>(null);
@@ -47,20 +60,31 @@ export const CustomerManagement: React.FC = () => {
   });
 
   const loadCustomers = async () => {
+    setIsLoadingCustomers(true);
     try {
-      const res = await customerApi.getAll({ search, status: statusFilter });
-      if (res.success) setCustomers(res.data);
+      const res = await customerApi.getAll({
+        search,
+        status: statusFilter,
+        page,
+        per_page: perPage,
+      });
+      if (res.success) {
+        setCustomers(res.data);
+        setPagination(res.pagination || null);
+      }
     } catch (error) {
       showToast('Could not load customers', {
         type: 'error',
         message: error instanceof Error ? error.message : 'Please try again.',
       });
+    } finally {
+      setIsLoadingCustomers(false);
     }
   };
 
   useEffect(() => {
-    loadCustomers();
-  }, [search, statusFilter]);
+    void loadCustomers();
+  }, [search, statusFilter, page, perPage]);
 
   const handleOpenAdd = () => {
     setSelectedCustomer(null);
@@ -111,7 +135,8 @@ export const CustomerManagement: React.FC = () => {
       if (res.success) {
         showToast(`Customer ${res.data.name} registered successfully`);
         setIsAddModalOpen(false);
-        loadCustomers();
+        if (page === 1) loadCustomers();
+        else setPage(1);
       }
     }
   };
@@ -143,6 +168,14 @@ export const CustomerManagement: React.FC = () => {
     a.click();
     showToast('Customer export CSV generated');
   };
+
+  const totalPages = Math.max(1, pagination?.total_pages || 1);
+  const firstResult = pagination && pagination.total > 0
+    ? (pagination.page - 1) * pagination.per_page + 1
+    : 0;
+  const lastResult = pagination
+    ? Math.min(pagination.page * pagination.per_page, pagination.total)
+    : customers.length;
 
   return (
     <div className="space-y-6">
@@ -181,7 +214,10 @@ export const CustomerManagement: React.FC = () => {
             type="text"
             placeholder="Search by customer, company, or email..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setPage(1);
+              setSearch(e.target.value);
+            }}
             className="w-full bg-[#FFFFFF] border border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
           />
         </div>
@@ -192,7 +228,10 @@ export const CustomerManagement: React.FC = () => {
             {['all', 'active', 'inactive'].map((st) => (
               <button
                 key={st}
-                onClick={() => setStatusFilter(st)}
+                onClick={() => {
+                  setPage(1);
+                  setStatusFilter(st);
+                }}
                 className={`px-2.5 py-1 text-xs capitalize rounded-md transition-colors ${
                   statusFilter === st ? 'bg-indigo-600 text-white font-medium' : 'text-slate-400 hover:text-slate-200'
                 }`}
@@ -221,7 +260,13 @@ export const CustomerManagement: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60">
-              {customers.length === 0 ? (
+              {isLoadingCustomers ? (
+                <tr>
+                  <td colSpan={8} className="text-center py-12 text-slate-400">
+                    Loading customers…
+                  </td>
+                </tr>
+              ) : customers.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="text-center py-12 text-slate-500">
                     No customers found matching current filters.
@@ -281,6 +326,57 @@ export const CustomerManagement: React.FC = () => {
           </table>
         </div>
       </BentoCard>
+
+      <div className="flex flex-col gap-3 rounded-xl border border-slate-800 bg-slate-900/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-400">
+          <span>
+            Showing <span className="font-semibold text-slate-200">{firstResult}–{lastResult}</span>
+            {' '}of <span className="font-semibold text-slate-200">{pagination?.total ?? customers.length}</span> customers
+          </span>
+          <label className="flex items-center gap-2">
+            Rows per page
+            <select
+              value={perPage}
+              onChange={(event) => {
+                setPage(1);
+                setPerPage(Number(event.target.value));
+              }}
+              className="rounded-md border border-slate-700 bg-slate-800 px-2 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
+              aria-label="Customers per page"
+            >
+              {[20, 50, 100].map((size) => (
+                <option key={size} value={size}>{size}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div className="flex items-center gap-2 self-end sm:self-auto">
+          <span className="mr-1 text-xs text-slate-400">
+            Page {Math.min(page, totalPages)} of {totalPages}
+          </span>
+          <button
+            type="button"
+            onClick={() => setPage((current) => Math.max(1, current - 1))}
+            disabled={!pagination?.has_prev || isLoadingCustomers}
+            className="inline-flex items-center gap-1 rounded-lg border border-slate-700 px-2.5 py-1.5 text-xs font-medium text-slate-200 transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+            aria-label="Previous customer page"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+            Previous
+          </button>
+          <button
+            type="button"
+            onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+            disabled={!pagination?.has_next || isLoadingCustomers}
+            className="inline-flex items-center gap-1 rounded-lg border border-slate-700 px-2.5 py-1.5 text-xs font-medium text-slate-200 transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+            aria-label="Next customer page"
+          >
+            Next
+            <ChevronRight className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
 
       {/* Add / Edit Customer Modal */}
       <Modal

@@ -6,7 +6,12 @@ import { mapCustomer } from './customerApi';
 import { mapInvoice } from './invoiceApi';
 import { mapPlan } from './planApi';
 import { mapSubscription } from './subscriptionApi';
-import { Payment, PaymentMethod } from '../types';
+import {
+  Payment,
+  PaymentMethod,
+  PlanRecommendation,
+  SubscriptionOptimizationRecommendation,
+} from '../types';
 
 const paymentMethods: PaymentMethod[] = [
   'Card',
@@ -46,6 +51,47 @@ const mapPortalPayment = (value: unknown): Payment => {
   };
 };
 
+const asRecord = (value: unknown): Record<string, unknown> =>
+  value && typeof value === 'object' ? value as Record<string, unknown> : {};
+
+const asString = (value: unknown) => typeof value === 'string' ? value : '';
+const asNumber = (value: unknown) => {
+  const parsed = Number(value ?? 0);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const mapPlanRecommendation = (value: unknown): PlanRecommendation => {
+  const record = asRecord(value);
+  return {
+    ...mapPlan(record),
+    popularityCount: asNumber(record.popularity_count),
+    customerCount: asNumber(record.customer_count),
+    recommendationScore: asNumber(record.recommendation_score),
+    recommendationReasons: Array.isArray(record.recommendation_reasons)
+      ? record.recommendation_reasons.filter((reason): reason is string => typeof reason === 'string')
+      : [],
+  };
+};
+
+const mapOptimizationRecommendation = (value: unknown): SubscriptionOptimizationRecommendation => {
+  const record = asRecord(value);
+  const action = record.action;
+  return {
+    subscriptionId: asString(record.subscription_id),
+    subscriptionNumber: asString(record.subscription_number),
+    currentPlanId: asString(record.current_plan_id),
+    currentPlanName: asString(record.current_plan_name),
+    alternativePlanId: asString(record.alternative_plan_id),
+    alternativePlanName: asString(record.alternative_plan_name),
+    action: action === 'downgrade' || action === 'review_unused_subscription'
+      ? action
+      : 'upgrade',
+    confidence: typeof record.confidence === 'number' ? record.confidence : undefined,
+    currentMonthlyCost: asNumber(record.current_monthly_cost),
+    alternativeMonthlyCost: asNumber(record.alternative_monthly_cost),
+  };
+};
+
 export const portalApi = {
   getProfile: async () => {
     const { data } = await api.get<ApiResponse<any>>('/portal/profile');
@@ -65,6 +111,21 @@ export const portalApi = {
   getPlans: async () => {
     const { data } = await api.get<ApiResponse<unknown[]>>('/portal/plans');
     return { ...data, data: (data.data || []).map(mapPlan) };
+  },
+
+  getRecommendations: async () => {
+    const { data } = await api.get<ApiResponse<{
+      plans: unknown[];
+      optimizer_recommendations?: unknown[];
+    }>>('/portal/recommendations');
+    return {
+      ...data,
+      data: {
+        plans: (data.data?.plans || []).map(mapPlanRecommendation),
+        optimizerRecommendations: (data.data?.optimizer_recommendations || [])
+          .map(mapOptimizationRecommendation),
+      },
+    };
   },
 
   getSubscriptions: async () => {
@@ -129,6 +190,26 @@ export const portalApi = {
     return data;
   },
 
+  createStripeCheckout: async (planId: string, payload: {
+    quantity: number;
+    billing_address: string;
+    country: string;
+    phone?: string;
+    notes?: string;
+  }) => {
+    const { data } = await api.post<ApiResponse<{ checkout_url: string }>>(
+      `/portal/plans/${planId}/checkout`, payload
+    );
+    return data;
+  },
+
+  confirmStripePayment: async (sessionId: string) => {
+    const { data } = await api.post<ApiResponse<any>>('/portal/payments/stripe/confirm', {
+      session_id: sessionId,
+    });
+    return data;
+  },
+
   requestCancel: async (subscriptionId: string, reason?: string) => {
     const { data } = await api.post<ApiResponse<null>>(
       `/portal/subscriptions/${subscriptionId}/cancel-request`,
@@ -153,12 +234,12 @@ export const portalApi = {
 
   // Helper: aggregate customer data in one call
   getCustomerData: async () => {
-    const [profile, subs, invoices, payments, plans] = await Promise.all([
+    const [profile, subs, invoices, payments, recommendations] = await Promise.all([
       portalApi.getProfile(),
       portalApi.getSubscriptions(),
       portalApi.getInvoices(),
       portalApi.getPayments(),
-      portalApi.getPlans(),
+      portalApi.getRecommendations(),
     ]);
     return {
       data: {
@@ -166,7 +247,8 @@ export const portalApi = {
         subscriptions: subs.data,
         invoices: invoices.data,
         payments: payments.data,
-        availablePlans: plans.data,
+        availablePlans: recommendations.data.plans,
+        optimizerRecommendations: recommendations.data.optimizerRecommendations,
       },
       success: true,
     };
