@@ -141,7 +141,7 @@ export const ProductManagement: React.FC = () => {
                   </div>
 
                   <div className="space-y-1.5">
-                    {prod.variants.map((v, idx) => (
+                    {(prod.variants || []).map((v, idx) => (
                       <button
                         key={v.id}
                         onClick={() =>

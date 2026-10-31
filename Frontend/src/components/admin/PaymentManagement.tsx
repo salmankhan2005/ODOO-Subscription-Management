@@ -137,7 +137,7 @@ export const PaymentManagement: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60">
-              {payments.map((p) => (
+              {(payments || []).map((p) => (
                 <tr key={p.id} className="hover:bg-slate-800/30 transition-colors">
                   <td className="px-5 py-3.5">
                     <div className="font-mono font-semibold text-slate-200">{p.paymentReference}</div>
@@ -158,7 +158,7 @@ export const PaymentManagement: React.FC = () => {
                   </td>
                   <td className="px-4 py-3.5 font-mono text-slate-300">{p.paymentDate}</td>
                   <td className="px-4 py-3.5 text-right font-mono font-semibold text-emerald-400">
-                    ${p.amount.toLocaleString()}
+                    ${(p?.amount ?? 0).toLocaleString()}
                   </td>
                   <td className="px-5 py-3.5 text-right">
                     <StatusBadge status={p.status} />

@@ -473,7 +473,7 @@ export const QuotationManagement: React.FC = () => {
                             onChange={(e) => handleVariantChange(line.id, e.target.value)}
                             className="w-full bg-[#F7FAFA] border border-slate-700 rounded-lg p-2 text-slate-100 font-mono text-[11px]"
                           >
-                            {currentProd?.variants.map((v) => (
+                            {(currentProd?.variants || []).map((v) => (
                               <option key={v.id} value={v.id}>
                                 {v.name} ({v.additionalPrice > 0 ? `+$${v.additionalPrice}` : '$0'})
                               </option>
@@ -636,7 +636,7 @@ export const QuotationManagement: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800">
-                  {viewingQuote.lines.map((l) => (
+                  {(viewingQuote?.lines || []).map((l) => (
                     <tr key={l.id}>
                       <td className="p-3">
                         <div className="font-semibold text-slate-200">{l.productName}</div>
@@ -653,10 +653,10 @@ export const QuotationManagement: React.FC = () => {
             </div>
 
             <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1 text-right font-mono">
-              <div className="text-slate-400">Subtotal: ${viewingQuote.subtotal.toLocaleString()}</div>
-              <div className="text-slate-400">Tax Total: ${viewingQuote.taxTotal.toLocaleString()}</div>
+              <div className="text-slate-400">Subtotal: ${(viewingQuote?.subtotal ?? 0).toLocaleString()}</div>
+              <div className="text-slate-400">Tax Total: ${(viewingQuote?.taxTotal ?? 0).toLocaleString()}</div>
               <div className="text-base font-bold text-emerald-400 pt-1 border-t border-slate-800">
-                Grand Total: ${viewingQuote.totalAmount.toLocaleString()}
+                Grand Total: ${(viewingQuote?.totalAmount ?? 0).toLocaleString()}
               </div>
             </div>
 

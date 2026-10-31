@@ -34,7 +34,7 @@ export const ReportsAnalytics: React.FC = () => {
       const subRes = await subscriptionApi.getAll();
       if (subRes.success) setSubscriptions(subRes.data);
 
-      const custRes = await customerApi.getAll();
+      const custRes = await customerApi.getAll({ per_page: 100 });
       if (custRes.success) setCustomers(custRes.data);
     };
     load();
