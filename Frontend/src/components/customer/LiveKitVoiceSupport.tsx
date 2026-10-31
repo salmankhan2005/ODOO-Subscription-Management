@@ -633,9 +633,9 @@ export const LiveKitVoiceSupport: React.FC<LiveKitVoiceSupportProps> = ({
 
       {/* ── Voice Agent UI Modal / Widget ─────────────────────────────── */}
       {isOpen && (
-        <div className="fixed bottom-16 right-5 z-50 w-[360px] max-w-[calc(100vw-2.5rem)] rounded-2xl border border-white/20 bg-neutral-950/95 shadow-2xl shadow-black/90 backdrop-blur-2xl flex flex-col overflow-hidden text-neutral-100 text-sm">
+        <div className="fixed bottom-16 right-5 z-50 w-90 max-w-[calc(100vw-2.5rem)] rounded-2xl border border-white/20 bg-neutral-950/95 shadow-2xl shadow-black/90 backdrop-blur-2xl flex flex-col overflow-hidden text-neutral-100 text-sm">
           {/* Specular gloss top bar */}
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/60 to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-emerald-400/60 to-transparent" />
 
           {/* ── Header: EA Cora & Telemetry Lift-off ────────────────────── */}
           <div className="flex items-center justify-between px-3.5 py-2.5 bg-neutral-900/90 border-b border-white/10">
@@ -704,7 +704,7 @@ export const LiveKitVoiceSupport: React.FC<LiveKitVoiceSupportProps> = ({
               <button
                 onClick={startCall}
                 disabled={isConnecting}
-                className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white text-xs font-bold tracking-wide shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 transition-all active:scale-98 disabled:opacity-60 cursor-pointer"
+                className="w-full py-2.5 px-4 rounded-xl bg-linear-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white text-xs font-bold tracking-wide shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 transition-all active:scale-98 disabled:opacity-60 cursor-pointer"
               >
                 <PhoneCall className="h-4 w-4" />
                 <span>{isConnecting ? 'Establishing Secure Line…' : 'Start Call (Deepgram Cora)'}</span>
@@ -726,7 +726,7 @@ export const LiveKitVoiceSupport: React.FC<LiveKitVoiceSupportProps> = ({
 
                 <button
                   onClick={stopCall}
-                  className="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white text-xs font-bold shadow-lg shadow-rose-600/30 flex items-center justify-center gap-1.5 transition-all active:scale-98 cursor-pointer"
+                  className="flex-1 py-2 px-3 rounded-xl bg-linear-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white text-xs font-bold shadow-lg shadow-rose-600/30 flex items-center justify-center gap-1.5 transition-all active:scale-98 cursor-pointer"
                 >
                   <PhoneOff className="h-3.5 w-3.5" />
                   <span>Stop Call</span>
@@ -870,7 +870,7 @@ export const LiveKitVoiceSupport: React.FC<LiveKitVoiceSupportProps> = ({
               value={textInput}
               onChange={(e) => setTextInput(e.target.value)}
               placeholder="Or type a question for Cora…"
-              className="flex-1 min-w-0 bg-neutral-800/80 border border-white/15 rounded-xl px-3 py-1.5 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-emerald-500/60"
+              className="flex-1 min-w-0 rounded-xl border border-white/15 bg-neutral-800/80 px-3 py-1.5 text-xs text-white placeholder:text-neutral-500 outline-none focus:border-emerald-500/60"
             />
             <button
               type="submit"

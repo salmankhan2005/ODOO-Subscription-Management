@@ -107,8 +107,8 @@ export const ShowcaseLanding: React.FC<ShowcaseLandingProps> = ({ onLaunch }) =>
       <IsometricDotGrid />
 
       {/* Atmospheric Ambient Glows */}
-      <div className="pointer-events-none absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-indigo-600/15 blur-[140px] rounded-full" />
-      <div className="pointer-events-none absolute top-1/3 right-10 w-[450px] h-[300px] bg-cyan-500/10 blur-[120px] rounded-full" />
+      <div className="pointer-events-none absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-175 h-87.5 bg-indigo-600/15 blur-[140px] rounded-full" />
+      <div className="pointer-events-none absolute top-1/3 right-10 w-112.5 h-75 bg-cyan-500/10 blur-[120px] rounded-full" />
 
       {/* ── Hero Section ────────────────────────────────────────────── */}
       <section className="relative pt-16 md:pt-24 pb-14 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
@@ -384,7 +384,7 @@ export const ShowcaseLanding: React.FC<ShowcaseLandingProps> = ({ onLaunch }) =>
             </div>
 
             {/* Results Bento Metrics */}
-            <div className="lg:col-span-5 p-6 rounded-2xl bg-gradient-to-br from-indigo-950/60 via-slate-900 to-slate-950 border border-indigo-500/40 shadow-xl flex flex-col justify-between">
+            <div className="lg:col-span-5 p-6 rounded-2xl bg-linear-to-br from-indigo-950/60 via-slate-900 to-slate-950 border border-indigo-500/40 shadow-xl flex flex-col justify-between">
               <div className="space-y-4">
                 <span className="text-xs font-bold uppercase tracking-wider text-indigo-300 font-mono">
                   Projected Financial Yield
@@ -421,7 +421,7 @@ export const ShowcaseLanding: React.FC<ShowcaseLandingProps> = ({ onLaunch }) =>
               <div className="pt-6">
                 <button
                   onClick={() => onLaunch('admin')}
-                  className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-semibold text-xs transition shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2"
+                  className="w-full py-3 rounded-xl bg-linear-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-semibold text-xs transition shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2"
                 >
                   <span>Deploy Pricing to Catalog</span>
                   <ArrowRight className="w-4 h-4" />
@@ -541,7 +541,7 @@ export const ShowcaseLanding: React.FC<ShowcaseLandingProps> = ({ onLaunch }) =>
 
       {/* ── Bottom Call To Action ───────────────────────────────────── */}
       <section className="mt-12 px-4 max-w-5xl mx-auto text-center">
-        <div className="p-8 md:p-12 rounded-3xl bg-gradient-to-r from-indigo-950 via-slate-900 to-indigo-950 border border-indigo-500/40 shadow-2xl relative overflow-hidden">
+        <div className="p-8 md:p-12 rounded-3xl bg-linear-to-r from-indigo-950 via-slate-900 to-indigo-950 border border-indigo-500/40 shadow-2xl relative overflow-hidden">
           <div className="relative z-10 max-w-2xl mx-auto space-y-4">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
               Ready to automate recurring billing with Recurly-grade speed?

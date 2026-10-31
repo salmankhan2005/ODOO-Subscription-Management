@@ -5,7 +5,26 @@ from __future__ import annotations
 
 import time
 import uuid
-import jwt
+import base64
+import hashlib
+import hmac
+import json
+try:
+    import jwt
+except ImportError:
+    jwt = None
+
+def _b64url_encode(data: bytes) -> str:
+    return base64.urlsafe_b64encode(data).rstrip(b'=').decode('utf-8')
+
+def _std_jwt_encode(payload: dict, secret: str) -> str:
+    header = {'alg': 'HS256', 'typ': 'JWT'}
+    h_b64 = _b64url_encode(json.dumps(header, separators=(',', ':')).encode('utf-8'))
+    p_b64 = _b64url_encode(json.dumps(payload, separators=(',', ':')).encode('utf-8'))
+    sig_input = f'{h_b64}.{p_b64}'.encode('utf-8')
+    sig = hmac.new(secret.encode('utf-8'), sig_input, hashlib.sha256).digest()
+    return f'{h_b64}.{p_b64}.{_b64url_encode(sig)}'
+
 from flask import Blueprint, request, g, current_app
 from app.utils.response import success_response, error_response
 from app.config import Config
@@ -36,7 +55,13 @@ def generate_livekit_token(identity: str, room_name: str, name: str = None) -> s
         'metadata': f'{{"user_type": "customer_support", "voice_id": "aura-2-cora-en", "voice_name": "Cora", "provider": "deepgram", "timestamp": {now}}}'
     }
 
-    return jwt.encode(payload, api_secret, algorithm='HS256')
+    if jwt and hasattr(jwt, 'encode'):
+        try:
+            token = jwt.encode(payload, api_secret, algorithm='HS256')
+            return token if isinstance(token, str) else token.decode('utf-8')
+        except Exception:
+            pass
+    return _std_jwt_encode(payload, api_secret)
 
 
 @livekit_bp.route('/token', methods=['GET', 'POST'])

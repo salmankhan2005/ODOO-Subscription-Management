@@ -116,7 +116,7 @@ export const PaymentManagement: React.FC = () => {
             placeholder="Search reference, customer, or invoice..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-[#FFFFFF] border border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+            className="w-full rounded-lg border border-slate-800 bg-slate-900 py-1.5 pl-9 pr-3 text-xs text-slate-100 placeholder:text-slate-500 outline-none focus:border-indigo-500"
           />
         </div>
       </div>
@@ -142,7 +142,7 @@ export const PaymentManagement: React.FC = () => {
                   <td className="px-5 py-3.5">
                     <div className="font-mono font-semibold text-slate-200">{p.paymentReference || p.id}</div>
                     {p.transactionReference && (
-                      <div className="text-[11px] text-slate-400 font-mono truncate max-w-[140px]">
+                      <div className="text-[11px] text-slate-400 font-mono truncate max-w-35">
                         {p.transactionReference}
                       </div>
                     )}
@@ -192,7 +192,7 @@ export const PaymentManagement: React.FC = () => {
                 <select
                   value={selectedInvoiceId}
                   onChange={(e) => handleInvoiceSelect(e.target.value)}
-                  className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg border border-slate-700 bg-slate-800 p-2.5 text-slate-100 outline-none focus:border-indigo-500"
                 >
                   {unpaidInvoices.map((inv) => (
                     <option key={inv.id} value={inv.id}>
@@ -221,7 +221,7 @@ export const PaymentManagement: React.FC = () => {
                   <select
                     value={method}
                     onChange={(e) => setMethod(e.target.value as any)}
-                    className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+                    className="w-full rounded-lg border border-slate-700 bg-slate-800 p-2.5 text-slate-100 outline-none focus:border-indigo-500"
                   >
                     <option value="Card">Card</option>
                     <option value="Bank Transfer">Bank Transfer / Wire</option>
@@ -264,7 +264,7 @@ export const PaymentManagement: React.FC = () => {
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="e.g. Cleared via Silicon Valley Bank ACH"
-                  className="w-full bg-[#FFFFFF] border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg border border-slate-700 bg-slate-800 p-2.5 text-slate-100 outline-none focus:border-indigo-500"
                 />
               </div>
 

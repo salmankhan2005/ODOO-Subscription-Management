@@ -4,9 +4,13 @@ app/config.py — Centralised configuration loaded from environment variables.
 from __future__ import annotations
 
 import os
-from dotenv import load_dotenv
-
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    def load_dotenv(*_args, **_kwargs):
+        pass
+    load_dotenv()
 
 
 class Config:
